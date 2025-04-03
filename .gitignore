@@ -1,1 +1,4 @@
 .qodo
+
+#ignore all csv files
+data/*.csv
