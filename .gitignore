@@ -2,3 +2,4 @@
 
 #ignore all csv files
 data/*.csv
+data/*.xlsx
