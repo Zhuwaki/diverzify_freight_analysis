@@ -3,3 +3,5 @@
 #ignore all csv files
 data/*.csv
 data/*.xlsx
+data/output/Freight_Analysis_Enriched_Output.csv
+Freight_Analysis_Enriched_Output.csv
