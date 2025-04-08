@@ -1,0 +1,5 @@
+SITEID,SITE,SUPPLIERID,SUPPLIERNAME,QUANTITY,CONVERSIONCODE,PARTNUMBER,COMMODITYGROUP,UOM,COMMODITYDESCRIPTION,estimated_cwt_cost,freight_class_cwt,rate_cwt,discount_cwt,estimated_area_cost,freight_class_area,rate_area,discount_area,commodity_group,uom
+SPT,Tampa,SUP001,Global Carpets Ltd,1500,Carpet Tile_1CPT_SF,PT001,1CPT,SF,Carpet Tile,156.98,L5C,25.37,1,,,,,1CPT,SF
+SPJ,Jacksonville,SUP002,Flooring Express,800,Carpet Roll_1CBL_SY,PT002,1CBL,SY,Carpet Roll,1345.11,L5C,45.29,1,,,,,1CBL,SY
+SPW,Longwood,SUP003,TileCo Inc,2000,VCT_1VNL_SF,PT003,1VNL,SF,VCT,720.51,L5C,25.37,1,,,,,1VNL,SF
+SPT,Tampa,SUP004,Modern Floors,1000,LVT_1VNL_SF,PT004,1VNL,SF,LVT,293.28,L5C,25.37,1,,,,,1VNL,SF
