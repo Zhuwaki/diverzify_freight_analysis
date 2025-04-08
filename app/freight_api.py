@@ -21,38 +21,47 @@ class_breakpoints = [
 def load_rate_table_from_csv(filepath: str):
     df = pd.read_csv(filepath)
     df.columns = [col.strip() for col in df.columns]
-
     rate_table = {}
-    for _, row in df.iterrows():
-        location = row["SiteID"].upper()
-        unit = row["Unit"].upper()
-        class_key = str(row["CommodityGroup"]).strip().title()
 
-        rate_table.setdefault(unit, {}).setdefault(
-            location, {}).setdefault(class_key, {})
+    for _, row in df.iterrows():
+        site = row["SiteID"].upper()
+        unit = row["Unit"].upper()
+        commodity = str(row["CommodityGroup"]).strip().upper()
+
+        rate_table.setdefault(site, {}).setdefault(
+            unit, {}).setdefault(commodity, {})
 
         for col in df.columns:
-            if col in ["Site", "SiteID", "Unit", "CommodityGroup"]:
+            if col in ["Site", "SiteID", "Unit", "CommodityGroup", "UnitClass", "FreightClass", "OldFreightClass", "CommodityDescription"]:
                 continue
             rate = row[col]
             if pd.notna(rate):
-                rate_table[unit][location][class_key][col.strip()
-                                                      ] = float(rate)
+                rate_table[site][unit][commodity][col] = float(rate)
 
     return rate_table
 
 
-RATES_CSV_PATH = "freight_rates.csv"
-rates = load_rate_table_from_csv(RATES_CSV_PATH)
+RATES_CSV_PATH = "freight_rates_updated.csv"
+CONVERSION_CSV_PATH = "conversion_table_with_code.csv"
 
-discounts = {
-    "SQYD": {"SPT": 1, "SPW": 1, "SPJ": 1},
-    "CWT": {"SPT": 1, "SPW": 1, "SPJ": 1}
+rates = load_rate_table_from_csv(RATES_CSV_PATH)
+conversion_df = pd.read_csv(CONVERSION_CSV_PATH)
+conversion_df["ConversionCode"] = conversion_df["ConversionCode"].str.strip(
+).str.upper()
+
+conversion_lookup = {
+    row["ConversionCode"]: {
+        "CommodityGroup": row["CommodityGroup"].strip().upper(),
+        "UOM": row["UOM"].strip().upper(),
+        "LbsPerUOM": row["LbsPerUOM"]
+    }
+    for _, row in conversion_df.iterrows()
 }
 
-
-def sqft_to_sqyd(sqft):
-    return sqft / 9
+discounts = {
+    "CWT": {"SPT": 1, "SPW": 1, "SPJ": 1},
+    "SQYD": {"SPT": 1, "SPW": 1, "SPJ": 1}
+}
 
 
 def get_priority_class(quantity: float) -> str:
@@ -62,67 +71,82 @@ def get_priority_class(quantity: float) -> str:
     raise ValueError("Quantity is out of range.")
 
 
-def estimate_freight_cost(uom: str, quantity: float, location: str,
-                          product_type: Optional[str] = None, cwt_class: Optional[int] = None):
-    uom = uom.upper()
-    location = location.upper()
+def sqft_to_sqyd(quantity: float) -> float:
+    return quantity / 9
 
+
+def convert_area_to_weight(quantity: float, conversion_code: str) -> (float, str, str):
+    code = conversion_code.strip().upper()
+    if code not in conversion_lookup:
+        raise ValueError(f"Conversion code '{conversion_code}' not found.")
+    entry = conversion_lookup[code]
+    lbs = quantity * entry["LbsPerUOM"]
+    return lbs, entry["UOM"], entry["CommodityGroup"]
+
+
+def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, uom: str):
     if uom == "SQFT":
         quantity = sqft_to_sqyd(quantity)
         uom = "SQYD"
 
     freight_class = get_priority_class(quantity)
 
-    if uom == "SQYD":
-        if not product_type:
-            raise ValueError(
-                "Product type must be provided for SQYD rate calculation.")
-        product_type = product_type.title()
-        rate = rates[uom][location][product_type][freight_class]
-        discount = discounts[uom][location]
-    elif uom == "CWT":
-        if cwt_class is None:
-            raise ValueError(
-                "CWT class must be provided for CWT rate calculation.")
-        rate = rates[uom][location][str(cwt_class)][freight_class]
-        discount = discounts[uom][location]
-    else:
-        raise ValueError(f"Unsupported unit of measure '{uom}'")
-
+    if site not in rates or uom not in rates[site] or commodity_group not in rates[site][uom]:
+        return None, None, None, None
+    rate_group = rates[site][uom][commodity_group]
+    if freight_class not in rate_group:
+        return None, None, None, None
+    rate = rate_group[freight_class]
+    discount = discounts.get(uom, {}).get(site, 1)
     cost = round(rate * discount * quantity, 2)
     return cost, freight_class, rate, discount
 
 
-class FreightRequest(BaseModel):
-    uom: str
-    quantity: float
-    location: str
-    product_type: Optional[str] = None
-    cwt_class: Optional[int] = None
+def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str):
+    site = site.upper()
+    lbs, original_uom, commodity_group = convert_area_to_weight(
+        quantity, conversion_code)
+    cwt_quantity = lbs / 100
+
+    # CWT calculation
+    cwt_freight_class = get_priority_class(cwt_quantity)
+    cwt_rate = rates[site]["CWT"][commodity_group][cwt_freight_class]
+    cwt_discount = discounts["CWT"].get(site, 1)
+    cwt_cost = round(cwt_rate * cwt_discount * cwt_quantity, 2)
+
+    # Area-based cost
+    area_cost, area_freight_class, area_rate, area_discount = estimate_area_based_cost(
+        quantity, site, commodity_group, original_uom)
+
+    return {
+        "estimated_cwt_cost": cwt_cost,
+        "freight_class_cwt": cwt_freight_class,
+        "rate_cwt": cwt_rate,
+        "discount_cwt": cwt_discount,
+        "estimated_area_cost": area_cost,
+        "freight_class_area": area_freight_class,
+        "rate_area": area_rate,
+        "discount_area": area_discount,
+        "commodity_group": commodity_group,
+        "uom": original_uom
+    }
 
 
 @app.post("/estimate")
-def estimate_freight(data: FreightRequest):
+def estimate_dual(data: dict):
     try:
-        cost, freight_class, rate, discount = estimate_freight_cost(
-            uom=data.uom,
-            quantity=data.quantity,
-            location=data.location,
-            product_type=data.product_type,
-            cwt_class=data.cwt_class
+        result = estimate_dual_freight_cost(
+            quantity=data["quantity"],
+            conversion_code=data["conversion_code"],
+            site=data["site"]
         )
-        return {
-            "estimated_cost": cost,
-            "freight_class": freight_class,
-            "rate": rate,
-            "discount": discount
-        }
+        return result
     except Exception as e:
         return {"error": str(e)}
 
 
 @app.post("/batch")
-async def estimate_batch(file: UploadFile = File(...)):
+async def estimate_dual_batch(file: UploadFile = File(...)):
     try:
         filename = file.filename.lower()
         if filename.endswith(".csv"):
@@ -134,56 +158,50 @@ async def estimate_batch(file: UploadFile = File(...)):
             return {"error": "Unsupported file type. Please upload .csv or .xlsx"}
 
         df.columns = [col.strip().upper() for col in df.columns]
-        required = ["SITE", "PO INV QTY", "INV UOM",
-                    "PART DESCRIPTION", "COMMODITY GROUP"]
+        required = ["SITEID", "QUANTITY", "CONVERSIONCODE"]
         missing = [col for col in required if col not in df.columns]
         if missing:
             return {"error": f"Missing columns: {', '.join(missing)}"}
 
-        df["LOCATION"] = df["SITE"]
-
-        def safe_estimate(row):
+        def safe_dual(row):
             try:
-                cost, freight_class, rate, discount = estimate_freight_cost(
-                    uom=row["INV UOM"],
-                    quantity=row["PO INV QTY"],
-                    location=row["LOCATION"],
-                    product_type=row["PART DESCRIPTION"] if pd.notna(
-                        row.get("PART DESCRIPTION")) else None,
-                    cwt_class=int(row["COMMODITY GROUP"]) if pd.notna(
-                        row.get("COMMODITY GROUP")) else None
+                print("[DEBUG] Processing row:", row.to_dict())
+                result = estimate_dual_freight_cost(
+                    quantity=row["QUANTITY"],
+                    conversion_code=row["CONVERSIONCODE"],
+                    site=row["SITEID"]
                 )
-                return pd.Series({
-                    "ESTIMATED_FREIGHT_COST": cost,
-                    "FREIGHT_CLASS": freight_class,
-                    "RATE_USED": rate,
-                    "DISCOUNT_USED": discount
-                })
+                return pd.Series(result)
             except Exception as e:
+                print("[ERROR] Failed processing row:", row.to_dict())
+                print("[ERROR] Exception:", str(e))
                 return pd.Series({
-                    "ESTIMATED_FREIGHT_COST": f"Error: {str(e)}",
-                    "FREIGHT_CLASS": "",
-                    "RATE_USED": "",
-                    "DISCOUNT_USED": ""
+                    "estimated_cwt_cost": f"Error: {str(e)}",
+                    "freight_class_cwt": "",
+                    "rate_cwt": "",
+                    "discount_cwt": "",
+                    "estimated_area_cost": "",
+                    "freight_class_area": "",
+                    "rate_area": "",
+                    "discount_area": "",
+                    "commodity_group": "",
+                    "uom": ""
                 })
 
-        result_df = df.apply(safe_estimate, axis=1)
-        final_df = pd.concat([df, result_df], axis=1)
-
-        final_df.replace([float("inf"), float("-inf")], None, inplace=True)
-        final_df.fillna("", inplace=True)
+        results = df.apply(safe_dual, axis=1)
+        final_df = pd.concat([df, results], axis=1)
 
         os.makedirs("downloads", exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        result_filename = f"freight_results_{timestamp}.csv"
-        result_path = os.path.join("downloads", result_filename)
-        final_df.to_csv(result_path, index=False)
+        output_file = f"freight_dual_results_{timestamp}.csv"
+        final_path = os.path.join("downloads", output_file)
+        final_df.to_csv(final_path, index=False)
 
         return {
             "filename": file.filename,
             "rows_processed": len(final_df),
             "preview": final_df.head(5).to_dict(orient="records"),
-            "download_url": f"/download/{result_filename}"
+            "download_url": f"/download/{output_file}"
         }
 
     except Exception as e:

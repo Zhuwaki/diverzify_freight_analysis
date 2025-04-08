@@ -1,0 +1,684 @@
+COMM 1,COMM 2,Commodity Group,Description,Old/New,Priority,UNIQUE_UOMS
+10,10,10,Carpet,Old Commodity,Yes,SY
+10,10,10,Carpet,Old Commodity,Yes,SF
+10,10,10,Carpet,Old Commodity,Yes,LF
+10,10,10,Carpet,Old Commodity,Yes,EA
+10,10,10,Carpet,Old Commodity,Yes,BOX
+10,100,10,Carpet,Old Commodity,Yes,SY
+100,10,100,Carpet Tiles,Old Commodity,Yes,SY
+100,100,100,Carpet Tiles,Old Commodity,Yes,SY
+100,100,100,Carpet Tiles,Old Commodity,Yes,SF
+100,100,100,Carpet Tiles,Old Commodity,Yes,EA
+100,100,100,Carpet Tiles,Old Commodity,Yes,PCS
+100,100,100,Carpet Tiles,Old Commodity,Yes,CTN
+100,100,100,Carpet Tiles,Old Commodity,Yes,yd2
+1000,1000,1000,Mapei Products,Old Commodity,No,EA
+1000,1000,1000,Mapei Products,Old Commodity,No,SF
+1020,1020,1020,Terrazzo,Old Commodity,No,SF
+1020,1020,1020,Terrazzo,Old Commodity,No,EA
+1020,1020,1020,Terrazzo,Old Commodity,No,GAL
+1060,1060,1060,Backing,Old Commodity,No,SY
+1060,1060,1060,Backing,Old Commodity,No,EA
+1070,1070,1070,Wallcovering,Old Commodity,No,EA
+1070,1070,1070,Wallcovering,Old Commodity,No,SF
+1090,1090,1090,Underlayment,Old Commodity,No,EA
+1090,1090,1090,Underlayment,Old Commodity,No,ROLL
+1090,1090,1090,Underlayment,Old Commodity,No,SF
+1110,1110,1110,Sheet Rubber,Old Commodity,No,SF
+1130,1130,1130,Rubber Transitions,Old Commodity,No,EA
+1130,1130,1130,Rubber Transitions,Old Commodity,No,PCS
+1130,1130,1130,Rubber Transitions,Old Commodity,No,LF
+1140,1140,1140,Sundries,Old Commodity,No,EA
+1140,1140,1140,Sundries,Old Commodity,No,LF
+1140,1140,1140,Sundries,Old Commodity,No,pkg
+1140,1140,1140,Sundries,Old Commodity,No,CTN
+1140,1140,1140,Sundries,Old Commodity,No,GAL
+1190,1190,1190,Safety/PPE,Old Commodity,No,PR
+120,120,120,Inbound Freight,Old Commodity,No,EA
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,EA
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,SF
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,LF
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,CTN
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,SY
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,PCS
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,ROLL
+150,150,150,Cage - Adhesives & Supplies,Old Commodity,No,BOX
+160,160,160,Rugs,Old Commodity,No,EA
+190,190,190,Wood Transitions,Old Commodity,No,EA
+190,190,190,Wood Transitions,Old Commodity,No,LF
+1ACC,1ACC,1ACC,Accessories,New Commodity,No,EA
+1ACC,1ACC,1ACC,Accessories,New Commodity,No,PCS
+1ACC,1ACC,1ACC,Accessories,New Commodity,No,LF
+1ACC,1MISC,1ACC,Accessories,New Commodity,No,EA
+1ACC,2ALL,1ACC,Accessories,New Commodity,No,EA
+1ACC,2CAUK,1ACC,Accessories,New Commodity,No,EA
+1ACC,2EQPT,1ACC,Accessories,New Commodity,No,EA
+1ACC,2GRTT,1ACC,Accessories,New Commodity,No,EA
+1ACC,2INS,1ACC,Accessories,New Commodity,No,EA
+1ACC,2MISC,1ACC,Accessories,New Commodity,No,ROLL
+1ACC,2MISC,1ACC,Accessories,New Commodity,No,LF
+1ACC,2NOSG,1ACC,Accessories,New Commodity,No,EA
+1ACC,2RUBR,1ACC,Accessories,New Commodity,No,EA
+1ACC,2SUN,1ACC,Accessories,New Commodity,No,EA
+1ACC,2TRMP,1ACC,Accessories,New Commodity,No,EA
+1ACC,2VNL,1ACC,Accessories,New Commodity,No,EA
+1ACC,2VNRB,1ACC,Accessories,New Commodity,No,EA
+1ACC,2VNRB,1ACC,Accessories,New Commodity,No,CTN
+1ACC,2VNRB,1ACC,Accessories,New Commodity,No,PCS
+1ACC,2VNRB,1ACC,Accessories,New Commodity,No,LF
+1ACC,2VNRB,1ACC,Accessories,New Commodity,No,ROLL
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,EA
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,COIL
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,LF
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,ROLL
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,SY
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,CTN
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,SF
+1ACC,2WELD,1ACC,Accessories,New Commodity,No,*
+1ACC,2WOOD,1ACC,Accessories,New Commodity,No,LF
+1ACC,2WOOD,1ACC,Accessories,New Commodity,No,EA
+1ADH,1ADH,1ADH,Adhesive,New Commodity,No,EA
+1ADH,1ADH,1ADH,Adhesive,New Commodity,No,ROLL
+1ADH,1ADH,1ADH,Adhesive,New Commodity,No,GAL
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,EA
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,gal
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,CTN
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,GAL
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,BOX
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,LF
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,SY
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,CS
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,KIT
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,ROLL
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,g
+1ADH,2ADH,1ADH,Adhesive,New Commodity,No,SF
+1ADH,2MISC,1ADH,Adhesive,New Commodity,No,ROLL
+1ADH,2ROLL,1ADH,Adhesive,New Commodity,No,ROLL
+1BASE,1BASE,1BASE,Base,New Commodity,No,LF
+1BASE,1BASE,1BASE,Base,New Commodity,No,EA
+1BASE,1BASE,1BASE,Base,New Commodity,No,SF
+1BASE,2BASE,1BASE,Base,New Commodity,No,EA
+1BASE,2BASE,1BASE,Base,New Commodity,No,LF
+1BASE,2BASE,1BASE,Base,New Commodity,No,SF
+1BASE,2BASE,1BASE,Base,New Commodity,No,CTN
+1BASE,2BASE,1BASE,Base,New Commodity,No,PCS
+1BASE,2BASE,1BASE,Base,New Commodity,No,ROLL
+1BASE,2BASE,1BASE,Base,New Commodity,No,gal
+1BASE,2CRPT,1BASE,Base,New Commodity,No,LF
+1BASE,2CRPT,1BASE,Base,New Commodity,No,EA
+1BASE,2MIX,1BASE,Base,New Commodity,No,LF
+1BASE,2MIX,1BASE,Base,New Commodity,No,CTN
+1BASE,2MIX,1BASE,Base,New Commodity,No,PCS
+1BASE,2MIX,1BASE,Base,New Commodity,No,COIL
+1BASE,2MIX,1BASE,Base,New Commodity,No,EA
+1BASE,2RUBR,1BASE,Base,New Commodity,No,LF
+1BASE,2RUBR,1BASE,Base,New Commodity,No,EA
+1BASE,2RUBR,1BASE,Base,New Commodity,No,SY
+1BASE,2RUBR,1BASE,Base,New Commodity,No,COIL
+1BASE,2RUBR,1BASE,Base,New Commodity,No,CTN
+1BASE,2RUBR,1BASE,Base,New Commodity,No,PCS
+1BASE,2RUBR,1BASE,Base,New Commodity,No,ROLL
+1BASE,2VNL,1BASE,Base,New Commodity,No,LF
+1BASE,2VNL,1BASE,Base,New Commodity,No,COIL
+1BASE,2VNL,1BASE,Base,New Commodity,No,CTN
+1BASE,2VNL,1BASE,Base,New Commodity,No,EA
+1BASE,2VNL,1BASE,Base,New Commodity,No,ft
+1BASE,2VNL,1BASE,Base,New Commodity,No,PCS
+1CBL,1CBL,1CBL,Carpet BL,New Commodity,Yes,SY
+1CBL,1CPT,1CBL,Carpet BL,New Commodity,Yes,SY
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,SY
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,SF
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,EA
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,LF
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,CTN
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,PCS
+1CBL,2CBL,1CBL,Carpet BL,New Commodity,Yes,ROLL
+1CBL,2CRPT,1CBL,Carpet BL,New Commodity,Yes,SY
+1CBL,2INS,1CBL,Carpet BL,New Commodity,Yes,ROLL
+1CBL,2TRMP,1CBL,Carpet BL,New Commodity,Yes,EA
+1CNS,1CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,SF
+1CNS,1CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,LF
+1CNS,1CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,1CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,Piece
+1CNS,1CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,PCS
+1CNS,2ADH,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2BASE,1CNS,Ceramic/Natural Stone,New Commodity,No,LF
+1CNS,2BASE,1CNS,Ceramic/Natural Stone,New Commodity,No,PCS
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,SF
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,PCS
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,LF
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,CTN
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,gal
+1CNS,2CNS,1CNS,Ceramic/Natural Stone,New Commodity,No,SY
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,SF
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,LF
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,CTN
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,PCS
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,Piece
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,SY
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,pcs
+1CNS,2FDTL,1CNS,Ceramic/Natural Stone,New Commodity,No,BOX
+1CNS,2MISC,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2SUN,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2TILE,1CNS,Ceramic/Natural Stone,New Commodity,No,SF
+1CNS,2TILE,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2TILE,1CNS,Ceramic/Natural Stone,New Commodity,No,CTN
+1CNS,2TILE,1CNS,Ceramic/Natural Stone,New Commodity,No,PCS
+1CNS,2TILE,1CNS,Ceramic/Natural Stone,New Commodity,No,LF
+1CNS,2TRMP,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CNS,2TRMP,1CNS,Ceramic/Natural Stone,New Commodity,No,LF
+1CNS,2TRMP,1CNS,Ceramic/Natural Stone,New Commodity,No,SF
+1CNS,2TRMP,1CNS,Ceramic/Natural Stone,New Commodity,No,PCS
+1CNS,2TRMP,1CNS,Ceramic/Natural Stone,New Commodity,No,Piece
+1CNS,420,1CNS,Ceramic/Natural Stone,New Commodity,No,EA
+1CPT,1CPT,1CPT,Carpet Tile,New Commodity,Yes,SY
+1CPT,1CPT,1CPT,Carpet Tile,New Commodity,Yes,SF
+1CPT,1CPT,1CPT,Carpet Tile,New Commodity,Yes,CTN
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,SY
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,CTN
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,SF
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,PCS
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,EA
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,LF
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,CS
+1CPT,2CPT,1CPT,Carpet Tile,New Commodity,Yes,pcs
+1CPT,2CRPT,1CPT,Carpet Tile,New Commodity,Yes,SY
+1EPX,1EPX,1EPX,Epoxy,New Commodity,No,EA
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,EA
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,CTN
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,gal
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,GAL
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,KIT
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,pt
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,lb
+1EPX,2EPX,1EPX,Epoxy,New Commodity,No,SF
+1EQPT,1EQPT,1EQPT,Equipment,New Commodity,No,EA
+1EQPT,2EQPT,1EQPT,Equipment,New Commodity,No,EA
+1EQPT,2EQPT,1EQPT,Equipment,New Commodity,No,LF
+1EQPT,2EQPT,1EQPT,Equipment,New Commodity,No,PCS
+1EQPT,2EQPT,1EQPT,Equipment,New Commodity,No,pkg
+1EQPT,2FLPR,1EQPT,Equipment,New Commodity,No,EA
+1ESD,2ESD,1ESD,ESD,New Commodity,No,SF
+1ESD,2ESD,1ESD,ESD,New Commodity,No,gal
+1ESD,2ESD,1ESD,ESD,New Commodity,No,EA
+1ESD,2ESD,1ESD,ESD,New Commodity,No,PCS
+1ESD,2ESD,1ESD,ESD,New Commodity,No,CTN
+1ESD,2ESD,1ESD,ESD,New Commodity,No,SY
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,EA
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,LF
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,gal
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,PCS
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,CTN
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,SF
+1FLPR,2FLPR,1FLPR,Floor Prep,New Commodity,No,SY
+1FLPR,2SLTY,1FLPR,Floor Prep,New Commodity,No,EA
+1INS,150,1INS,Installation Supplies,New Commodity,No,EA
+1INS,1INS,1INS,Installation Supplies,New Commodity,No,GAL
+1INS,1INS,1INS,Installation Supplies,New Commodity,No,EA
+1INS,2GRTT,1INS,Installation Supplies,New Commodity,No,EA
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,EA
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,SF
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,ROLL
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,pkg
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,SY
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,CTN
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,LF
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,PR
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,PCS
+1INS,2INS,1INS,Installation Supplies,New Commodity,No,BOX
+1INS,2ROLL,1INS,Installation Supplies,New Commodity,No,EA
+1LAM,1LAM,1LAM,Laminate,New Commodity,No,SF
+1LAM,2ROLL,1LAM,Laminate,New Commodity,No,SF
+1LAM,2ROLL,1LAM,Laminate,New Commodity,No,EA
+1LAM,2TILE,1LAM,Laminate,New Commodity,No,SF
+1LIN,1LIN,1LIN,Linoleum,New Commodity,No,SF
+1LIN,2ROLL,1LIN,Linoleum,New Commodity,No,SY
+1LIN,2ROLL,1LIN,Linoleum,New Commodity,No,SF
+1LIN,2ROLL,1LIN,Linoleum,New Commodity,No,CTN
+1LIN,2ROLL,1LIN,Linoleum,New Commodity,No,EA
+1LIN,2TILE,1LIN,Linoleum,New Commodity,No,SF
+1LIN,2TILE,1LIN,Linoleum,New Commodity,No,LF
+1LIN,2TILE,1LIN,Linoleum,New Commodity,No,CTN
+1LIN,2TILE,1LIN,Linoleum,New Commodity,No,SY
+1MATS,2MATS,1MATS,Mats,New Commodity,No,SF
+1MATS,2MATS,1MATS,Mats,New Commodity,No,EA
+1MATS,2MATS,1MATS,Mats,New Commodity,No,LF
+1MATS,2MATS,1MATS,Mats,New Commodity,No,SY
+1MATS,2MATS,1MATS,Mats,New Commodity,No,CTN
+1MATS,2MATS,1MATS,Mats,New Commodity,No,""""
+1MATS,2MATS,1MATS,Mats,New Commodity,No,CS
+1MISC,1MISC,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,1MISC,1MISC,Miscellaneous,New Commodity,No,GAL
+1MISC,1MISC,1MISC,Miscellaneous,New Commodity,No,ROLL
+1MISC,1MISC,1MISC,Miscellaneous,New Commodity,No,CTN
+1MISC,1MISC,1MISC,Miscellaneous,New Commodity,No,SF
+1MISC,1MISC,1MISC,Miscellaneous,New Commodity,No,BOX
+1MISC,2ADH,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,2BASE,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,2CNS,1MISC,Miscellaneous,New Commodity,No,SF
+1MISC,2EQPT,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,2INS,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,2MATS,1MISC,Miscellaneous,New Commodity,No,LF
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,SF
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,LF
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,SY
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,CTN
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,ROLL
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,PR
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,PCS
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,BOX
+1MISC,2MISC,1MISC,Miscellaneous,New Commodity,No,gal
+1MISC,2TOOL,1MISC,Miscellaneous,New Commodity,No,EA
+1MISC,2WELD,1MISC,Miscellaneous,New Commodity,No,EA
+1PAD,2PAD,1PAD,Padding,New Commodity,No,SY
+1PAD,2PAD,1PAD,Padding,New Commodity,No,EA
+1PAD,2PAD,1PAD,Padding,New Commodity,No,SF
+1PAD,2PAD,1PAD,Padding,New Commodity,No,PCS
+1PAD,2PAD,1PAD,Padding,New Commodity,No,CTN
+1PAD,2PAD,1PAD,Padding,New Commodity,No,LF
+1PAD,2PAD,1PAD,Padding,New Commodity,No,ROLL
+1PCAR,2PCAR,1PCAR,Product Care,New Commodity,No,EA
+1PCAR,2PCAR,1PCAR,Product Care,New Commodity,No,gal
+1RBF,1ACC,1RBF,Rubber Flooring,New Commodity,No,EA
+1RBF,1RBF,1RBF,Rubber Flooring,New Commodity,No,SF
+1RBF,290,1RBF,Rubber Flooring,New Commodity,No,SY
+1RBF,2ROLL,1RBF,Rubber Flooring,New Commodity,No,SF
+1RBF,2ROLL,1RBF,Rubber Flooring,New Commodity,No,SY
+1RBF,2ROLL,1RBF,Rubber Flooring,New Commodity,No,EA
+1RBF,2ROLL,1RBF,Rubber Flooring,New Commodity,No,ROLL
+1RBF,2ROLL,1RBF,Rubber Flooring,New Commodity,No,LF
+1RBF,2RUBR,1RBF,Rubber Flooring,New Commodity,No,SF
+1RBF,2RUBR,1RBF,Rubber Flooring,New Commodity,No,SY
+1RBF,2TILE,1RBF,Rubber Flooring,New Commodity,No,CTN
+1RBF,2TILE,1RBF,Rubber Flooring,New Commodity,No,SF
+1RBF,2TILE,1RBF,Rubber Flooring,New Commodity,No,PCS
+1RBF,2TILE,1RBF,Rubber Flooring,New Commodity,No,EA
+1RBF,2TILE,1RBF,Rubber Flooring,New Commodity,No,SY
+1RBF,2WELD,1RBF,Rubber Flooring,New Commodity,No,EA
+1RFLO,2RFLO,1RFLO,Raised Floor,New Commodity,No,EA
+1RFLO,2RFLO,1RFLO,Raised Floor,New Commodity,No,SF
+1RUG,2RUG,1RUG,Rugs,New Commodity,No,EA
+1RUG,2RUG,1RUG,Rugs,New Commodity,No,SF
+1RUG,2RUG,1RUG,Rugs,New Commodity,No,SY
+1SLTY,1SLTY,1SLTY,Specialty Flooring,New Commodity,No,EA
+1SLTY,2MISC,1SLTY,Specialty Flooring,New Commodity,No,SF
+1SLTY,2RUBR,1SLTY,Specialty Flooring,New Commodity,No,SF
+1SLTY,2SLTY,1SLTY,Specialty Flooring,New Commodity,No,EA
+1SLTY,2SLTY,1SLTY,Specialty Flooring,New Commodity,No,SF
+1SLTY,2SLTY,1SLTY,Specialty Flooring,New Commodity,No,LF
+1SLTY,2TILE,1SLTY,Specialty Flooring,New Commodity,No,SF
+1SLTY,2TILE,1SLTY,Specialty Flooring,New Commodity,No,PCS
+1SLTY,2TILE,1SLTY,Specialty Flooring,New Commodity,No,LF
+1SLTY,2TILE,1SLTY,Specialty Flooring,New Commodity,No,EA
+1SND,2GRTT,1SND,Sundry,New Commodity,No,EA
+1SND,2SND,1SND,Sundry,New Commodity,No,EA
+1STR,1STR,1STR,Stairs,New Commodity,No,PCS
+1STR,2MISC,1STR,Stairs,New Commodity,No,LF
+1STR,2NOSG,1STR,Stairs,New Commodity,No,LF
+1STR,2NOSG,1STR,Stairs,New Commodity,No,EA
+1STR,2NOSG,1STR,Stairs,New Commodity,No,PCS
+1STR,2NOSG,1STR,Stairs,New Commodity,No,SF
+1STR,2OPTR,1STR,Stairs,New Commodity,No,EA
+1STR,2OPTR,1STR,Stairs,New Commodity,No,LF
+1STR,2OPTR,1STR,Stairs,New Commodity,No,PCS
+1STR,2OPTR,1STR,Stairs,New Commodity,No,CTN
+1STR,2OPTR,1STR,Stairs,New Commodity,No,Piece
+1STR,2OPTR,1STR,Stairs,New Commodity,No,SF
+1STR,2RISR,1STR,Stairs,New Commodity,No,EA
+1STR,2RISR,1STR,Stairs,New Commodity,No,LF
+1STR,2RISR,1STR,Stairs,New Commodity,No,PCS
+1STR,2RISR,1STR,Stairs,New Commodity,No,CTN
+1STR,2RUBR,1STR,Stairs,New Commodity,No,EA
+1STR,2STR,1STR,Stairs,New Commodity,No,EA
+1STR,2STR,1STR,Stairs,New Commodity,No,LF
+1STR,2STRG,1STR,Stairs,New Commodity,No,LF
+1STR,2STRG,1STR,Stairs,New Commodity,No,EA
+1STR,2STRG,1STR,Stairs,New Commodity,No,CTN
+1STR,2TRAD,1STR,Stairs,New Commodity,No,EA
+1STR,2TRAD,1STR,Stairs,New Commodity,No,LF
+1STR,2TRAD,1STR,Stairs,New Commodity,No,SF
+1STR,2TRAD,1STR,Stairs,New Commodity,No,PCS
+1STR,2TRAD,1STR,Stairs,New Commodity,No,CTN
+1STR,2TRAD,1STR,Stairs,New Commodity,No,SY
+1SUN,1SUN,1SUN,Sundry,New Commodity,No,EA
+1SUN,2ALL,1SUN,Sundry,New Commodity,No,EA
+1SUN,2CAUK,1SUN,Sundry,New Commodity,No,EA
+1SUN,2CAUK,1SUN,Sundry,New Commodity,No,CTN
+1SUN,2CNS,1SUN,Sundry,New Commodity,No,EA
+1SUN,2GRTT,1SUN,Sundry,New Commodity,No,EA
+1SUN,2GRTT,1SUN,Sundry,New Commodity,No,gal
+1SUN,2GRTT,1SUN,Sundry,New Commodity,No,SF
+1SUN,2GRTT,1SUN,Sundry,New Commodity,No,*
+1SUN,2INS,1SUN,Sundry,New Commodity,No,EA
+1SUN,2MISC,1SUN,Sundry,New Commodity,No,PCS
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,EA
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,ROLL
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,CTN
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,SY
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,gal
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,oz
+1SUN,2SUN,1SUN,Sundry,New Commodity,No,PCS
+1SUN,2THIN,1SUN,Sundry,New Commodity,No,EA
+1SUN,2THIN,1SUN,Sundry,New Commodity,No,SY
+1SUN,2THIN,1SUN,Sundry,New Commodity,No,CTN
+1SUN,2TILE,1SUN,Sundry,New Commodity,No,EA
+1SUN,2VNL,1SUN,Sundry,New Commodity,No,ROLL
+1SUN,2WOOD,1SUN,Sundry,New Commodity,No,EA
+1SUN,2WOOD,1SUN,Sundry,New Commodity,No,gal
+1TOOL,1TOOL,1TOOL,Tools,New Commodity,No,EA
+1TOOL,2INS,1TOOL,Tools,New Commodity,No,EA
+1TOOL,2TOOL,1TOOL,Tools,New Commodity,No,EA
+1TOOL,2TOOL,1TOOL,Tools,New Commodity,No,CTN
+1TOOL,2TOOL,1TOOL,Tools,New Commodity,No,SF
+1TOOL,2TOOL,1TOOL,Tools,New Commodity,No,BOX
+1TOOL,2TOOL,1TOOL,Tools,New Commodity,No,pkg
+1TOOL,2TOOL,1TOOL,Tools,New Commodity,No,ROLL
+1TRAN,1ACC,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,1TRAN,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,1TRAN,1TRAN,Transitions,New Commodity,No,PCS
+1TRAN,1TRAN,1TRAN,Transitions,New Commodity,No,LF
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,LF
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,PCS
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,*
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,SF
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,SY
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,ROLL
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,BOX
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,CTN
+1TRAN,2ALL,1TRAN,Transitions,New Commodity,No,ft
+1TRAN,2MISC,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,2NOSG,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,2RUBR,1TRAN,Transitions,New Commodity,No,LF
+1TRAN,2RUBR,1TRAN,Transitions,New Commodity,No,PCS
+1TRAN,2RUBR,1TRAN,Transitions,New Commodity,No,SF
+1TRAN,2TILE,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,2TRAD,1TRAN,Transitions,New Commodity,No,EA
+1TRAN,2TRAD,1TRAN,Transitions,New Commodity,No,LF
+1TRAN,2TRMP,1TRAN,Transitions,New Commodity,No,EA
+1TRZO,2TRZO,1TRZO,Terrazzo,New Commodity,No,CTN
+1TRZO,2TRZO,1TRZO,Terrazzo,New Commodity,No,SF
+1TRZO,2TRZO,1TRZO,Terrazzo,New Commodity,No,LF
+1TRZO,2TRZO,1TRZO,Terrazzo,New Commodity,No,EA
+1TURF,2TURF,1TURF,Turf,New Commodity,No,SY
+1TURF,2TURF,1TURF,Turf,New Commodity,No,EA
+1TURF,2TURF,1TURF,Turf,New Commodity,No,LF
+1TURF,2TURF,1TURF,Turf,New Commodity,No,SF
+1UND,1UND,1UND,Underlayment,New Commodity,No,EA
+1UND,2UND,1UND,Underlayment,New Commodity,No,EA
+1UND,2UND,1UND,Underlayment,New Commodity,No,pkg
+1UND,2UND,1UND,Underlayment,New Commodity,No,PCS
+1UND,2UND,1UND,Underlayment,New Commodity,No,CTN
+1UND,2UND,1UND,Underlayment,New Commodity,No,SY
+1UND,2UND,1UND,Underlayment,New Commodity,No,SF
+1UND,2UND,1UND,Underlayment,New Commodity,No,LF
+1UND,2UND,1UND,Underlayment,New Commodity,No,m
+1UND,2UND,1UND,Underlayment,New Commodity,No,in
+1VNL,1ACC,1VNL,Vinyl,New Commodity,Yes,EA
+1VNL,1VNL,1VNL,Vinyl,New Commodity,Yes,SY
+1VNL,1VNL,1VNL,Vinyl,New Commodity,Yes,CTN
+1VNL,1VNL,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2BASE,1VNL,Vinyl,New Commodity,Yes,LF
+1VNL,2LVP,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2LVP,1VNL,Vinyl,New Commodity,Yes,SY
+1VNL,2LVP,1VNL,Vinyl,New Commodity,Yes,CTN
+1VNL,2LVP,1VNL,Vinyl,New Commodity,Yes,LF
+1VNL,2LVP,1VNL,Vinyl,New Commodity,Yes,EA
+1VNL,2LVT,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2LVT,1VNL,Vinyl,New Commodity,Yes,EA
+1VNL,2LVT,1VNL,Vinyl,New Commodity,Yes,SY
+1VNL,2LVT,1VNL,Vinyl,New Commodity,Yes,CTN
+1VNL,2LVT,1VNL,Vinyl,New Commodity,Yes,LF
+1VNL,2LVT,1VNL,Vinyl,New Commodity,Yes,PCS
+1VNL,2PLNK,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2ROLL,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2ROLL,1VNL,Vinyl,New Commodity,Yes,SY
+1VNL,2ROLL,1VNL,Vinyl,New Commodity,Yes,EA
+1VNL,2ROLL,1VNL,Vinyl,New Commodity,Yes,CTN
+1VNL,2ROLL,1VNL,Vinyl,New Commodity,Yes,PCS
+1VNL,2TILE,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2VCT,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2VCT,1VNL,Vinyl,New Commodity,Yes,EA
+1VNL,2VCT,1VNL,Vinyl,New Commodity,Yes,CTN
+1VNL,2VCT,1VNL,Vinyl,New Commodity,Yes,PCS
+1VNL,2VCT,1VNL,Vinyl,New Commodity,Yes,SY
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,CTN
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,SY
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,SF
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,EA
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,BOX
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,PCS
+1VNL,2VNL,1VNL,Vinyl,New Commodity,Yes,LF
+1VNL,2WELD,1VNL,Vinyl,New Commodity,Yes,EA
+1WOOD,1WOOD,1WOOD,Wood,New Commodity,No,SF
+1WOOD,1WOOD,1WOOD,Wood,New Commodity,No,EA
+1WOOD,1WOOD,1WOOD,Wood,New Commodity,No,LF
+1WOOD,2ADH,1WOOD,Wood,New Commodity,No,EA
+1WOOD,2INS,1WOOD,Wood,New Commodity,No,EA
+1WOOD,2INS,1WOOD,Wood,New Commodity,No,ROLL
+1WOOD,2PLNK,1WOOD,Wood,New Commodity,No,SF
+1WOOD,2PLNK,1WOOD,Wood,New Commodity,No,EA
+1WOOD,2PLNK,1WOOD,Wood,New Commodity,No,LF
+1WOOD,2TILE,1WOOD,Wood,New Commodity,No,SF
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,EA
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,LF
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,SF
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,CTN
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,PCS
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,Piece
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,pkg
+1WOOD,2WOOD,1WOOD,Wood,New Commodity,No,SY
+20,20,20,Sheet Vinyl,Old Commodity,Yes,SY
+20,20,20,Sheet Vinyl,Old Commodity,Yes,SF
+20,20,20,Sheet Vinyl,Old Commodity,Yes,LF
+20,20,20,Sheet Vinyl,Old Commodity,Yes,EA
+20,20,20,Sheet Vinyl,Old Commodity,Yes,Sv
+20,291,20,Sheet Vinyl,Old Commodity,Yes,SY
+210,210,210,Wood,Old Commodity,No,SF
+210,210,210,Wood,Old Commodity,No,EA
+210,210,210,Wood,Old Commodity,No,LF
+210,210,210,Wood,Old Commodity,No,SY
+210,210,210,Wood,Old Commodity,No,qt
+210,210,210,Wood,Old Commodity,No,BOX
+210,210,210,Wood,Old Commodity,No,PCS
+210,210,210,Wood,Old Commodity,No,CTN
+250,250,250,Raised Floors,Old Commodity,No,EA
+260,260,260,Rubber Tile,Old Commodity,No,SF
+260,260,260,Rubber Tile,Old Commodity,No,EA
+260,260,260,Rubber Tile,Old Commodity,No,CTN
+270,270,270,Mats,Old Commodity,No,SF
+270,270,270,Mats,Old Commodity,No,EA
+280,280,280,Adhesives,Old Commodity,No,EA
+280,280,280,Adhesives,Old Commodity,No,SF
+280,280,280,Adhesives,Old Commodity,No,KIT
+280,280,280,Adhesives,Old Commodity,No,SY
+280,280,280,Adhesives,Old Commodity,No,CTN
+285,280,285,Epoxy,Old Commodity,No,EA
+285,285,285,Epoxy,Old Commodity,No,EA
+285,285,285,Epoxy,Old Commodity,No,KIT
+290,290,290,Rubber Roll Goods,Old Commodity,No,SF
+290,290,290,Rubber Roll Goods,Old Commodity,No,SY
+290,290,290,Rubber Roll Goods,Old Commodity,No,EA
+290,290,290,Rubber Roll Goods,Old Commodity,No,LF
+290,290,290,Rubber Roll Goods,Old Commodity,No,ROLL
+291,291,291,Laminate Flooring Accessories,Old Commodity,No,EA
+2ADH,1CPT,2ADH,Adhesive,New Commodity,No,EA
+2ADH,2ADH,2ADH,Adhesive,New Commodity,No,EA
+2ADH,2ADH,2ADH,Adhesive,New Commodity,No,GAL
+2BASE,2BASE,2BASE,Base,New Commodity,No,LF
+2CAUK,2CAUK,2CAUK,Caulk,New Commodity,No,EA
+2CNS,2CNS,2CNS,Ceramic/Natural Stone,New Commodity,No,EA
+2CNS,2CNS,2CNS,Ceramic/Natural Stone,New Commodity,No,SF
+2CPT,2CPT,2CPT,Carpet Tile,New Commodity,Yes,SY
+2CPT,2CPT,2CPT,Carpet Tile,New Commodity,Yes,SF
+2CRPT,1RUG,2CRPT,Carpet,New Commodity,Yes,EA
+2CRPT,2CRPT,2CRPT,Carpet,New Commodity,Yes,SY
+2FDTL,2FDTL,2FDTL,Field tile,New Commodity,No,SF
+2FLPR,2FLPR,2FLPR,Floor Prep,New Commodity,No,EA
+2GRTT,2CAUK,2GRTT,Grout,New Commodity,No,EA
+2GRTT,2GRTT,2GRTT,Grout,New Commodity,No,EA
+2GRTT,2GRTT,2GRTT,Grout,New Commodity,No,GAL
+2INS,2INS,2INS,Installation Supplies,New Commodity,No,EA
+2LVP,2LVP,2LVP,LVP,New Commodity,Yes,SF
+2LVT,2LVT,2LVT,LVT,New Commodity,Yes,SF
+2MATS,2MATS,2MATS,Mats,New Commodity,No,EA
+2MISC,2MISC,2MISC,Miscellaneous,New Commodity,No,ROLL
+2MISC,2MISC,2MISC,Miscellaneous,New Commodity,No,EA
+2NOSG,2NOSG,2NOSG,Nosing,New Commodity,No,LF
+2NOSG,2NOSG,2NOSG,Nosing,New Commodity,No,EA
+2NOSG,2VNL,2NOSG,Nosing,New Commodity,No,LF
+2OPTR,2OPTR,2OPTR,One Piece Tread/Riser,New Commodity,No,LF
+2OPTR,2OPTR,2OPTR,One Piece Tread/Riser,New Commodity,No,PCS
+2RISR,2RISR,2RISR,Riser,New Commodity,No,Piece
+2ROLL,2ROLL,2ROLL,Roll,New Commodity,No,EA
+2ROLL,2ROLL,2ROLL,Roll,New Commodity,No,SF
+2ROLL,2ROLL,2ROLL,Roll,New Commodity,No,ROLL
+2ROLL,2ROLL,2ROLL,Roll,New Commodity,No,SY
+2ROLL,2WELD,2ROLL,Roll,New Commodity,No,EA
+2RUBR,2BASE,2RUBR,Rubber,New Commodity,No,LF
+2RUBR,2RUBR,2RUBR,Rubber,New Commodity,No,SF
+2RUBR,2TRAD,2RUBR,Rubber,New Commodity,No,EA
+2SLTY,2SLTY,2SLTY,Specialty Flooring,New Commodity,No,EA
+2STR,2STR,2STR,Stairs,New Commodity,No,LF
+2SUN,2GRTT,2SUN,Sundry,New Commodity,No,EA
+2SUN,2SUN,2SUN,Sundry,New Commodity,No,EA
+2THIN,2THIN,2THIN,Thinset,New Commodity,No,EA
+2TILE,2TILE,2TILE,Tile,New Commodity,No,SF
+2TILE,2TILE,2TILE,Tile,New Commodity,No,EA
+2TILE,2TILE,2TILE,Tile,New Commodity,No,gal
+2TILE,2TILE,2TILE,Tile,New Commodity,No,LF
+2TILE,2TILE,2TILE,Tile,New Commodity,No,PCS
+2TILE,2TILE,2TILE,Tile,New Commodity,No,SY
+2TOOL,2FLPR,2TOOL,Tools,New Commodity,No,EA
+2TRAD,2TRAD,2TRAD,Tread,New Commodity,No,PCS
+2TRAD,2TRAD,2TRAD,Tread,New Commodity,No,LF
+2TRMP,2TRMP,2TRMP,Trim Piece,New Commodity,No,EA
+2VNRB,2VNRB,2VNRB,Vinyl/Rubber,New Commodity,Yes,SF
+2WELD,2WELD,2WELD,Weld Rod,New Commodity,No,EA
+30,30,30,Product Care Supplies,Old Commodity,No,EA
+30,30,30,Product Care Supplies,Old Commodity,No,CS
+30,30,30,Product Care Supplies,Old Commodity,No,CTN
+300,300,300,Other,Old Commodity,No,EA
+300,300,300,Other,Old Commodity,No,SF
+300,300,300,Other,Old Commodity,No,LF
+300,300,300,Other,Old Commodity,No,BOX
+300,300,300,Other,Old Commodity,No,SY
+310,310,310,Wood Accessories,Old Commodity,No,EA
+310,310,310,Wood Accessories,Old Commodity,No,LF
+310,310,310,Wood Accessories,Old Commodity,No,qt
+310,310,310,Wood Accessories,Old Commodity,No,CTN
+310,310,310,Wood Accessories,Old Commodity,No,SF
+320,320,320,Sheet Vinyl Tools,Old Commodity,No,EA
+330,330,330,Specialty Tile,Old Commodity,No,SF
+330,330,330,Specialty Tile,Old Commodity,No,EA
+330,330,330,Specialty Tile,Old Commodity,No,CTN
+330,330,330,Specialty Tile,Old Commodity,No,SY
+335,335,335,Protection,Old Commodity,No,EA
+335,335,335,Protection,Old Commodity,No,SF
+335,335,335,Protection,Old Commodity,No,ROLL
+340,340,340,Rubber Accessories,Old Commodity,No,EA
+340,340,340,Rubber Accessories,Old Commodity,No,LF
+340,340,340,Rubber Accessories,Old Commodity,No,ROLL
+340,340,340,Rubber Accessories,Old Commodity,No,SF
+380,380,380,Specialty Flooring,Old Commodity,No,EA
+380,380,380,Specialty Flooring,Old Commodity,No,SF
+390,390,390,Specialty items - Jobs,Old Commodity,No,EA
+40,40,40,Vinyl Tile,Old Commodity,Yes,SF
+40,40,40,Vinyl Tile,Old Commodity,Yes,EA
+40,40,40,Vinyl Tile,Old Commodity,Yes,CTN
+40,40,40,Vinyl Tile,Old Commodity,Yes,SY
+40,40,40,Vinyl Tile,Old Commodity,Yes,ROLL
+40,40,40,Vinyl Tile,Old Commodity,Yes,LF
+40,40,40,Vinyl Tile,Old Commodity,Yes,ft2
+40,400,40,Vinyl Tile,Old Commodity,Yes,SF
+400,400,400,Ceramic,Old Commodity,No,SF
+400,400,400,Ceramic,Old Commodity,No,EA
+400,400,400,Ceramic,Old Commodity,No,LF
+400,400,400,Ceramic,Old Commodity,No,CTN
+400,400,400,Ceramic,Old Commodity,No,PCS
+400,400,400,Ceramic,Old Commodity,No,SY
+400,400,400,Ceramic,Old Commodity,No,Piece
+405,405,405,Laminates,Old Commodity,No,EA
+405,405,405,Laminates,Old Commodity,No,SF
+405,405,405,Laminates,Old Commodity,No,SY
+410,410,410,Natural Stone,Old Commodity,No,SF
+410,410,410,Natural Stone,Old Commodity,No,EA
+410,410,410,Natural Stone,Old Commodity,No,CTN
+410,410,410,Natural Stone,Old Commodity,No,PCS
+410,410,410,Natural Stone,Old Commodity,No,LF
+420,420,420,Ceramic Sundries,Old Commodity,No,EA
+420,420,420,Ceramic Sundries,Old Commodity,No,SF
+420,420,420,Ceramic Sundries,Old Commodity,No,ROLL
+420,420,420,Ceramic Sundries,Old Commodity,No,BOX
+420,420,420,Ceramic Sundries,Old Commodity,No,LF
+420,420,420,Ceramic Sundries,Old Commodity,No,CTN
+420,420,420,Ceramic Sundries,Old Commodity,No,PCS
+440,440,440,Laminate,Old Commodity,No,SF
+50,50,50,Base,Old Commodity,No,LF
+50,50,50,Base,Old Commodity,No,CTN
+50,50,50,Base,Old Commodity,No,EA
+50,50,50,Base,Old Commodity,No,PCS
+50,50,50,Base,Old Commodity,No,SF
+600,600,600,Tools,Old Commodity,No,EA
+600,600,600,Tools,Old Commodity,No,BOX
+650,650,650,Linoleum Roll Goods,Old Commodity,No,SY
+650,650,650,Linoleum Roll Goods,Old Commodity,No,LF
+650,650,650,Linoleum Roll Goods,Old Commodity,No,EA
+650,650,650,Linoleum Roll Goods,Old Commodity,No,SF
+70,70,70,Metal Transitions,Old Commodity,No,EA
+70,70,70,Metal Transitions,Old Commodity,No,LF
+760,760,760,Equipment,Old Commodity,No,EA
+785,785,785,Turf,Old Commodity,No,SF
+785,785,785,Turf,Old Commodity,No,EA
+80,80,80,Vinyl Transitions,Old Commodity,No,LF
+80,80,80,Vinyl Transitions,Old Commodity,No,EA
+80,80,80,Vinyl Transitions,Old Commodity,No,PCS
+805,805,805,Floor Prep,Old Commodity,No,EA
+805,805,805,Floor Prep,Old Commodity,No,CTN
+805,805,805,Floor Prep,Old Commodity,No,GAL
+805,805,805,Floor Prep,Old Commodity,No,BOX
+810,810,810,Other,Old Commodity,No,EA
+810,810,810,Other,Old Commodity,No,SY
+810,810,810,Other,Old Commodity,No,SF
+82,100,82,Vinyl Accessories,Old Commodity,No,EA
+82,82,82,Vinyl Accessories,Old Commodity,No,LF
+82,82,82,Vinyl Accessories,Old Commodity,No,EA
+82,82,82,Vinyl Accessories,Old Commodity,No,PCS
+82,82,82,Vinyl Accessories,Old Commodity,No,ROLL
+84,84,84,Stair Accessories,Old Commodity,No,LF
+84,84,84,Stair Accessories,Old Commodity,No,EA
+84,84,84,Stair Accessories,Old Commodity,No,PCS
+88,88,88,Linoleum Tiles,Old Commodity,No,EA
+88,88,88,Linoleum Tiles,Old Commodity,No,SF
+88,88,88,Linoleum Tiles,Old Commodity,No,SY
+88,88,88,Linoleum Tiles,Old Commodity,No,LF
+90,90,90,Padding,Old Commodity,No,SY
+90,90,90,Padding,Old Commodity,No,EA
+90,90,90,Padding,Old Commodity,No,ROLL
+90,90,90,Padding,Old Commodity,No,SF
+EQ,EQ,EQ,Equipment,New Commodity,No,EA
+GM,GM,GM,General Inventory,New Commodity,No,SF
+GM,GM,GM,General Inventory,New Commodity,No,CTN
+GM,PR,GM,General Inventory,New Commodity,No,EA
+GM,PR,GM,General Inventory,New Commodity,No,CTN
+GM,PR,GM,General Inventory,New Commodity,No,LF
+GM,PR,GM,General Inventory,New Commodity,No,PCS
+GM,PR,GM,General Inventory,New Commodity,No,SY
+GM,PR,GM,General Inventory,New Commodity,No,ROLL
+GM,PR,GM,General Inventory,New Commodity,No,SF
+GM,PR,GM,General Inventory,New Commodity,No,pkg
+GM,PR,GM,General Inventory,New Commodity,No,COIL
+GM,SM,GM,General Inventory,New Commodity,No,EA
+GM,SM,GM,General Inventory,New Commodity,No,PCS
+GM,SM,GM,General Inventory,New Commodity,No,pkg
+GM,SM,GM,General Inventory,New Commodity,No,CTN
+GM,SM,GM,General Inventory,New Commodity,No,ROLL
+GM,SM,GM,General Inventory,New Commodity,No,LF
+PR,PR,PR,Project Material,New Commodity,No,EA
+PR,PR,PR,Project Material,New Commodity,No,CTN
+SM,SM,SM,Stock Material,New Commodity,No,EA
+SM,SM,SM,Stock Material,New Commodity,No,BOX
+SM,SM,SM,Stock Material,New Commodity,No,qt

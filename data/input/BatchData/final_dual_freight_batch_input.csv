@@ -1,0 +1,5 @@
+SiteID,Site,SupplierID,SupplierName,Quantity,ConversionCode,PartNumber,CommodityGroup,UOM,CommodityDescription
+SPT,Tampa,SUP001,Global Carpets Ltd,1500,Carpet Tile_1CPT_SF,PT001,1CPT,SF,Carpet Tile
+SPJ,Jacksonville,SUP002,Flooring Express,800,Carpet Roll_1CBL_SY,PT002,1CBL,SY,Carpet Roll
+SPW,Longwood,SUP003,TileCo Inc,2000,VCT_1VNL_SF,PT003,1VNL,SF,VCT
+SPT,Tampa,SUP004,Modern Floors,1000,LVT_1VNL_SF,PT004,1VNL,SF,LVT
