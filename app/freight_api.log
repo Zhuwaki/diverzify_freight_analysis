@@ -86,3 +86,7 @@
 2025-04-09 16:16:30,654 [INFO] \u2705 Conversion table loaded successfully.
 2025-04-09 16:21:29,740 [INFO] \u2705 Rate table loaded successfully.
 2025-04-09 16:21:29,744 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-09 18:04:26,969 [WARNING] \u274c Missing rate entry for SPW / SQYD / 1VNL
+2025-04-09 18:04:26,972 [WARNING] \u274c Missing rate entry for SPT / SQYD / 1VNL
+2025-04-09 18:04:26,973 [WARNING] \u274c Missing rate entry for SPW / SQYD / 1VNL
+2025-04-09 18:04:26,997 [INFO] \u2705 Batch processed: freight_dual_results_20250409_180426.csv with 5 rows
