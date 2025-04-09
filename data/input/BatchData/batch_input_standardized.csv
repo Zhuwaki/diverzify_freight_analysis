@@ -1,0 +1,6 @@
+po_no,siteid,site,supplierid,suppliername,quantity,conversion_code,partnumber,commodity_group,commoditydescription,uom
+PO001,SPT,Tampa,SUP001,Global Carpets Ltd,1500,Carpet_Tile_1CPT_SQFT,PT001,1CPT,Carpet Tile,SF
+PO002,SPW,Longwood,SUP002,FloorTech Inc,1000,LVT_1VNL_SQFT,PT002,1VNL,LVT,SF
+PO003,SPJ,Jacksonville,SUP003,Premier Flooring,800,Carpet_Roll_1CBL_SQYD,PT003,1CBL,Carpet Roll,SY
+PO004,SPT,Tampa,SUP004,Metro Floors,2000,VCT_1VNL_SQFT,PT004,1VNL,VCT,SF
+PO005,SPW,Longwood,SUP005,Tile World,2500,LVP_1VNL_SQYD,PT005,1VNL,LVP,SY
