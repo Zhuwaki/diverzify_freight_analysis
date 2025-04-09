@@ -74,3 +74,15 @@
 2025-04-09 13:07:27,110 [WARNING] \u274c Missing rate entry for SPT / SQYD / 1VNL
 2025-04-09 13:07:27,110 [WARNING] \u274c Missing rate entry for SPW / SQYD / 1VNL
 2025-04-09 13:07:27,121 [INFO] \u2705 Batch processed: freight_dual_results_20250409_130727.csv with 5 rows
+2025-04-09 13:58:03,151 [ERROR] \u274c Row error: Quantity is out of range.
+2025-04-09 13:58:03,182 [ERROR] \u274c Row error: Quantity is out of range.
+2025-04-09 13:58:03,284 [ERROR] \u274c Row error: Quantity is out of range.
+2025-04-09 13:58:03,384 [ERROR] \u274c Row error: Quantity is out of range.
+2025-04-09 13:58:03,521 [ERROR] \u274c Row error: Quantity is out of range.
+2025-04-09 13:58:03,890 [INFO] \u2705 Batch processed: freight_dual_results_20250409_135803.csv with 1149 rows
+2025-04-09 16:13:07,355 [INFO] \u2705 Rate table loaded successfully.
+2025-04-09 16:13:07,360 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-09 16:16:30,650 [INFO] \u2705 Rate table loaded successfully.
+2025-04-09 16:16:30,654 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-09 16:21:29,740 [INFO] \u2705 Rate table loaded successfully.
+2025-04-09 16:21:29,744 [INFO] \u2705 Conversion table loaded successfully.
