@@ -1,5 +1,0 @@
-SiteID,Site,SupplierID,SupplierName,Quantity,UOM,CommodityGroup,PartNumber
-SPT,Tampa,SUP001,Global Carpets Ltd,1000,SQYD,1CPT,PT001
-SPJ,Jacksonville,SUP002,Flooring Express,850,CWT,1CBL,PT002
-SPW,Longwood,SUP003,TileCo Inc,2000,SQFT,1VNL,PT003
-SPT,Tampa,SUP004,Modern Floors,3200,CWT,1CBL,PT004

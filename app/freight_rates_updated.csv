@@ -1,28 +1,22 @@
-﻿Site,SiteID,Unit,UnitClass,FreightClass,OldFreightClass,CommodityGroup,CommodityDescription,L5C,5C,1M,2M,3M,5M,10M,20M,30M,40M
+﻿site,siteid,unit,unitclass,freightclass,oldfreightclass,commodity_group,commoditydescription,L5C,5C,1M,2M,3M,5M,10M,20M,30M,40M
 Jacksonville,SPJ,CWT,Weight,150,10,1CBL,Carpet Roll,45.29,41.28,232.01,25.74,25.74,20.17,14.95,14.95,14.95,14.95
-Jacksonville,SPJ,CWT,Weight,70,100,1CPT,Carpet Tile/ LVT/ LVP,22.87,20.85,16.16,13,13,10.19,8.49,8.49,8.49,8.49
 Jacksonville,SPJ,CWT,Weight,70,100,1CPT,Carpet Tile,22.87,20.85,16.16,13,13,10.19,8.49,8.49,8.49,8.49
 Jacksonville,SPJ,CWT,Weight,70,40,1VNL,LVT,22.87,20.85,16.16,13,13,10.19,8.49,8.49,8.49,8.49
 Jacksonville,SPJ,CWT,Weight,70,40,1VNL,LVP,22.87,20.85,16.16,13,13,10.19,8.49,8.49,8.49,8.49
 Jacksonville,SPJ,CWT,Weight,70,40,1VNL,VCT,22.87,20.85,16.16,13,13,10.19,8.49,8.49,8.49,8.49
 Jacksonville,SPJ,SQYD,Area,150,10,1CBL,Carpet Roll,0.4366,0.4249,0.419,0.4102,0.3955,0,0,0,0,0
 Jacksonville,SPJ,SQYD,Area,70,100,1CPT,Carpet Tile,0.7422,0.7223,0.7123,0.6974,0.6724,0,0,0,0,0
-Jacksonville,SPJ,Truck load,,,,,Truck load,1628,,,,,,,,,
 Longwood,SPW,CWT,Weight,150,10,1CBL,Carpet Roll,50.23,45.79,35.51,28.54,28.54,22.37,16.57,16.57,16.57,16.57
-Longwood,SPW,CWT,Weight,70,100,1CPT,Carpet Tile/ LVT/ LVP,25.37,23.13,17.94,14.14,14.14,11.3,9.42,9.42,9.42,9.42
 Longwood,SPW,CWT,Weight,70,100,1CPT,Carpet Tile,25.37,23.13,17.94,14.14,14.14,11.3,9.42,9.42,9.42,9.42
 Longwood,SPW,CWT,Weight,70,40,1VNL,LVT,25.37,23.13,17.94,14.14,14.14,11.3,9.42,9.42,9.42,9.42
 Longwood,SPW,CWT,Weight,70,40,1VNL,LVP,25.37,23.13,17.94,14.14,14.14,11.3,9.42,9.42,9.42,9.42
 Longwood,SPW,CWT,Weight,70,40,1VNL,VCT,25.37,23.13,17.94,14.14,14.14,11.3,9.42,9.42,9.42,9.42
 Longwood,SPW,SQYD,Area,150,10,1CBL,Carpet Roll,0.4521,0.4412,0.4339,0.4267,0.4086,0,0,0,0,0
 Longwood,SPW,SQYD,Area,70,100,1CPT,Carpet Tile,0.7685,0.75,0.7377,0.7254,0.6946,0,0,0,0,0
-Longwood,SPW,Truck load,,,,,Truck load,2324,,,,,,,,,
 Tampa,SPT,CWT,Weight,150,10,1CBL,Carpet Roll,50.23,45.79,35.51,28.54,28.54,22.37,16.57,16.57,16.57,16.57
-Tampa,SPT,CWT,Weight,70,100,1CPT,Carpet Tile/ LVT/ LVP,25.37,23.13,17.94,14.41,14.41,11.3,9.42,9.42,9.42,9.42
 Tampa,SPT,CWT,Weight,70,100,1CPT,Carpet Tile,25.37,23.13,17.94,14.41,14.41,11.3,9.42,9.42,9.42,9.42
 Tampa,SPT,CWT,Weight,70,40,1VNL,LVT,25.37,23.13,17.94,14.41,14.41,11.3,9.42,9.42,9.42,9.42
 Tampa,SPT,CWT,Weight,70,40,1VNL,LVP,25.37,23.13,17.94,14.41,14.41,11.3,9.42,9.42,9.42,9.42
 Tampa,SPT,CWT,Weight,70,40,1VNL,VCT,25.37,23.13,17.94,14.41,14.41,11.3,9.42,9.42,9.42,9.42
 Tampa,SPT,SQYD,Area,150,10,1CBL,Carpet Roll,0.4608,0.4497,0.4424,0.435,0.4166,0,0,0,0,0
 Tampa,SPT,SQYD,Area,70,100,1CPT,Carpet Tile,0.7834,0.7646,0.752,0.7394,0.7082,0,0,0,0,0
-Tampa,SPT,Truck load,,,,,Truck load,2371,,,,,,,,,
