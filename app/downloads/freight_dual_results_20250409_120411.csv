@@ -1,6 +1,0 @@
-po_no,siteid,site,supplierid,suppliername,quantity,conversion_code,partnumber,commodity_group,commoditydescription,uom,est_lbs,est_freight_class_lbs,est_rate_cwt,est_discount_cwt,est_estimated_cwt_cost,est_freight_class_area,est_sqyd,est_rate_area,est_discount_area,est_estimated_area_cost,est_commodity_group,est_uom
-PO001,SPT,Tampa,SUP001,Global Carpets Ltd,1500,Carpet_Tile_1CPT_SQFT,PT001,1CPT,Carpet Tile,SF,618.75,5C,23.13,1,143.12,L5C,166.67,0.7834,1.0,130.57,1CPT,SQFT
-PO002,SPW,Longwood,SUP002,FloorTech Inc,1000,LVT_1VNL_SQFT,PT002,1VNL,LVT,SF,1156.0,1M,17.94,1,207.39,,111.11,,,Missing rate entry,1VNL,SQFT
-PO003,SPJ,Jacksonville,SUP003,Premier Flooring,800,Carpet_Roll_1CBL_SQYD,PT003,1CBL,Carpet Roll,SY,2970.0,2M,25.74,1,764.48,5C,800.0,0.4249,1.0,339.92,1CBL,SQYD
-PO004,SPT,Tampa,SUP004,Metro Floors,2000,VCT_1VNL_SQFT,PT004,1VNL,VCT,SF,2840.0,2M,14.41,1,409.24,,222.22,,,Missing rate entry,1VNL,SQFT
-PO005,SPW,Longwood,SUP005,Tile World,2500,LVP_1VNL_SQYD,PT005,1VNL,LVP,SY,25087.5,20M,9.42,1,2363.24,,2500.0,,,Missing rate entry,1VNL,SQYD

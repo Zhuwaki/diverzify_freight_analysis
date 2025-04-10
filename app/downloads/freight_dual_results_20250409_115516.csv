@@ -1,6 +1,0 @@
-po_no,siteid,site,supplierid,suppliername,quantity,conversion_code,partnumber,commodity_group,commoditydescription,uom,est_estimated_cwt_cost,est_freight_class_cwt,est_rate_cwt,est_discount_cwt,est_estimated_area_cost,est_freight_class_area,est_rate_area,est_discount_area,est_commodity_group,est_uom
-PO001,SPT,Tampa,SUP001,Global Carpets Ltd,1500,Carpet_Tile_1CPT_SQFT,PT001,1CPT,Carpet Tile,SF,143.12,5C,23.13,1,130.57,L5C,0.7834,1.0,1CPT,SQFT
-PO002,SPW,Longwood,SUP002,FloorTech Inc,1000,LVT_1VNL_SQFT,PT002,1VNL,LVT,SF,207.39,1M,17.94,1,Missing rate entry,,,,1VNL,SQFT
-PO003,SPJ,Jacksonville,SUP003,Premier Flooring,800,Carpet_Roll_1CBL_SQYD,PT003,1CBL,Carpet Roll,SY,764.48,2M,25.74,1,339.92,5C,0.4249,1.0,1CBL,SQYD
-PO004,SPT,Tampa,SUP004,Metro Floors,2000,VCT_1VNL_SQFT,PT004,1VNL,VCT,SF,409.24,2M,14.41,1,Missing rate entry,,,,1VNL,SQFT
-PO005,SPW,Longwood,SUP005,Tile World,2500,LVP_1VNL_SQYD,PT005,1VNL,LVP,SY,2363.24,20M,9.42,1,Missing rate entry,,,,1VNL,SQYD
