@@ -1,6 +1,7 @@
 .qodo
 
 #ignore all csv files
+data/*
 data/*.csv
 data/*.xlsx
 data/output/Freight_Analysis_Enriched_Output.csv
