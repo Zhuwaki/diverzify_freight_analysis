@@ -16732,3 +16732,5 @@
 2025-04-09 22:52:39,012 [WARNING] \u274c Missing CWT entry for SPWV / 1CPT
 2025-04-09 22:52:39,012 [WARNING] \u274c Missing rate entry for SPWV / SQYD / 1CPT
 2025-04-09 22:52:41,632 [INFO] \u2705 Batch processed: freight_dual_results_20250409_225241.csv with 10172 rows
+2025-04-10 09:22:55,464 [INFO] \u2705 Rate table loaded successfully.
+2025-04-10 09:22:55,480 [INFO] \u2705 Conversion table loaded successfully.
