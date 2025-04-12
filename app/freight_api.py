@@ -260,6 +260,21 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         final_path = os.path.join("downloads", output_file)
         final_df.to_csv(final_path, index=False)
 
+        # Define the desired export columns
+        model_columns = [
+            'project_id', 'project_name', 'po_no', 'account', 'account_description',
+            'siteid', 'site', 'supplierid', 'suppliername', 'partnumber',
+            'partdescription', 'est_commodity_group', 'new_commodity_description', 'quantity', 'invoice_id', 'invoice_no', 'uom',
+            'conversion_code', 'match_supplier', 'est_estimated_area_cost',
+            'est_estimated_cwt_cost', 'est_freight_class_area', 'est_freight_class_lbs',
+            'est_lbs', 'est_rate_area', 'est_rate_cwt', 'est_sqyd', 'est_uom'
+        ]
+
+        # Filter only available columns before saving
+        export_columns = [
+            col for col in model_columns if col in final_df.columns]
+        final_df[export_columns].to_csv(final_path, index=False)
+
         logging.info(
             f"✅ Batch processed: {output_file} with {len(final_df)} rows")
 
