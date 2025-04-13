@@ -1,3 +1,8 @@
+import plotly.graph_objects as go
+import numpy as np
+import plotly.express as px
+
+
 import streamlit as st
 import pandas as pd
 from io import BytesIO
@@ -211,11 +216,19 @@ def merge_actual_and_estimated_summaries(df_actual, df_est):
 
 # --- Download Helper ---
 def csv_download_button(df, label, filename):
+    if df is None:
+        st.warning(f"⚠️ Cannot download — no data available for: {label}")
+        return
+
     buffer = BytesIO()
     df.to_csv(buffer, index=False)
     buffer.seek(0)
-    st.download_button(label=label, data=buffer,
-                       file_name=filename, mime="text/csv")
+    st.download_button(
+        label=label,
+        data=buffer,
+        file_name=filename,
+        mime="text/csv"
+    )
 
 
 # --- Display Logic ---
@@ -265,11 +278,78 @@ if tabs:
             st.markdown("### 🔀 Combined Freight View")
             styled_df = style_savings(merged_df)
             st.write(styled_df)
-            csv_download_button(
-                merged_df,
-                "⬇️ Download Combined Freight View",
-                "combined_freight_summary.csv"
-            )
+            # --- Optional Graphs (Safe block) ---
+            try:
+                st.markdown(
+                    "### 📊 Freight Cost Comparison Views (Interactive)")
+
+                groupings = {
+                    "Commodity type": "new_commodity_group",
+                    "Commodity description": "new_commodity_description",
+                    "Site location": "siteid"
+                }
+
+                cols = st.columns(3)
+
+                for (title, group_col), col in zip(groupings.items(), cols):
+                    with col:
+                        # Aggregate and reshape
+                        df_plot = (
+                            merged_df
+                            .groupby(group_col)[
+                                ["unique_freight_total",
+                                    "total_area_cost", "total_cwt_cost"]
+                            ]
+                            .sum()
+                            .reset_index()
+                        )
+
+                        if df_plot.empty or df_plot[["unique_freight_total", "total_area_cost", "total_cwt_cost"]].sum().sum() == 0:
+                            col.warning(f"No data to display for: {title}")
+                            continue
+
+                        # Convert to long-form (melted) for Plotly Express
+                        df_melted = df_plot.melt(
+                            id_vars=[group_col],
+                            value_vars=["unique_freight_total",
+                                        "total_area_cost", "total_cwt_cost"],
+                            var_name="Cost Type",
+                            value_name="Cost (USD '000)"
+                        )
+                        df_melted["Cost (USD '000)"] = (
+                            df_melted["Cost (USD '000)"] / 1000)
+                        df_melted["Cost Type"] = df_melted["Cost Type"].map({
+                            "unique_freight_total": "Actual Freight",
+                            "total_area_cost": "Estimated Area",
+                            "total_cwt_cost": "Estimated CWT"
+                        })
+
+                        fig = px.bar(
+                            df_melted,
+                            x=group_col,
+                            y="Cost (USD '000)",
+                            color="Cost Type",
+                            barmode="group",
+                            # text_auto=True,
+                            labels={group_col: title},
+                            height=350
+                        )
+                        fig.update_layout(
+                            title=title,
+                            xaxis_tickangle=45,
+                            margin=dict(l=20, r=20, t=30, b=40),
+                            showlegend=(group_col == "siteid")
+                        )
+                        col.plotly_chart(fig, use_container_width=True)
+
+            except Exception as e:
+                st.warning(f"⚠️ Could not generate interactive graphs: {e}")
+
+    csv_download_button(
+        merged_df,
+        "⬇️ Download Combined Freight View",
+        "combined_freight_summary.csv"
+    )
 
     for tab_name, summary_dict in tab_map.items():
         idx = tabs.index(tab_name)
@@ -281,6 +361,7 @@ if tabs:
                     df_summary = summary_dict[key]
                     st.dataframe(df_summary)
                     csv_download_button(
+
                         df_summary,
                         f"⬇️ Download {key.capitalize()} CSV",
                         f"{tab_name.lower().replace(' ', '_')}_{key}.csv"
