@@ -1,4 +1,4 @@
-﻿site,siteid,unit,unitclass,freightclass,oldfreightclass,commodity_group,commoditydescription,L5C,5C,1M,2M,3M,5M,10M,20M,30M,40M
+﻿site,siteid,unit,unitclass,freightclass,oldfreightclass,commodity_group,commodity_description,L5C,5C,1M,2M,3M,5M,10M,20M,30M,40M
 Itasca,DIT,CWT,Weight,150,10,1CBL,Carpet Roll,53.14,43.71,32.87,26.1,26.1,18.52,13.47,13.47,13.47,13.47
 Itasca,DIT,CWT,Weight,70,100,1CPT,Carpet Tile,28.27,23.25,17.48,13.88,13.88,9.85,7.17,7.17,7.17,7.17
 Itasca,DIT,CWT,Weight,70,40,1VNL,LVT,28.27,23.25,17.48,13.88,13.88,9.85,7.17,7.17,7.17,7.17

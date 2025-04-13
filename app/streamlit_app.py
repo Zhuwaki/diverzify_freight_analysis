@@ -12,7 +12,8 @@ st.title("📦 Freight Estimator Tool")
 st.markdown(
     "Upload your batch freight input file and estimate dual freight costs (CWT + Area)")
 
-uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
+uploaded_file = st.file_uploader(
+    "Upload CSV or Excel File", type=["csv", "xlsx"])
 
 if uploaded_file:
     st.success("✅ File uploaded successfully")
@@ -20,8 +21,20 @@ if uploaded_file:
     if st.button("Estimate Freight Costs"):
         with st.spinner("⏳ Processing..."):
             try:
-                files = {"file": (uploaded_file.name,
-                                  uploaded_file.getvalue(), "text/csv")}
+                file_extension = uploaded_file.name.split(".")[-1].lower()
+
+                if file_extension == "csv":
+                    mime_type = "text/csv"
+                elif file_extension == "xlsx":
+                    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                else:
+                    st.error("❌ Unsupported file type")
+                    st.stop()
+
+                files = {
+                    "file": (uploaded_file.name, uploaded_file.getvalue(), mime_type)
+                }
+
                 response = requests.post(f"{API_URL}/batch", files=files)
                 data = response.json()
 
@@ -30,7 +43,7 @@ if uploaded_file:
 
                     st.subheader("📋 Preview Results")
                     preview_df = pd.DataFrame(data["preview"])
-                    st.dataframe(preview_df, use_container_width=True)
+                    st.dataframe(preview_df)
 
                     st.markdown("---")
                     st.markdown(
@@ -42,4 +55,4 @@ if uploaded_file:
             except Exception as e:
                 st.error(f"💥 Exception: {str(e)}")
 else:
-    st.info("📁 Please upload a .csv file to begin.")
+    st.info("📁 Please upload a .csv or .xlsx file to begin.")
