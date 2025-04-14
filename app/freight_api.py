@@ -307,7 +307,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
             'est_pricing_basis',
             'conversion_code', 'match_supplier', 'est_estimated_area_cost',
             'est_estimated_cwt_cost', 'est_freight_class_area', 'est_freight_class_lbs',
-            'est_lbs', 'est_rate_area', 'est_rate_cwt', 'est_sqyd', 'est_uom',
+            'est_lbs', 'est_rate_area', 'est_rate_cwt', 'est_sqyd', 'est_uom', 'multiple_parts'
         ]
 
         export_columns = [
