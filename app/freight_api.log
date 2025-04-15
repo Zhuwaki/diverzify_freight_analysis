@@ -2209,3 +2209,9 @@
 2025-04-15 17:45:49,040 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
 2025-04-15 17:45:49,043 [INFO] \u2705 Rate table loaded successfully.
 2025-04-15 17:45:49,045 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 17:47:48,840 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 17:47:48,843 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 17:47:48,846 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 17:47:51,724 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 17:47:51,729 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 17:47:51,733 [INFO] \u2705 Conversion table loaded successfully.
