@@ -152,6 +152,9 @@ def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, u
     if uom == "SQFT":
         quantity = sqft_to_sqyd(quantity)
         uom = "SQYD"
+        # NEW RULE: Never calculate area for 1VNL
+    if commodity_group.upper() == "1VNL":
+        return "Not applicable", None, None, None
 
     if site not in rates or uom not in rates[site] or commodity_group not in rates[site][uom]:
         logging.info(
