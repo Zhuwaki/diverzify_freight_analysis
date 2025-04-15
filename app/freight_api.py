@@ -204,17 +204,23 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
 
     return {
         "commodity_group": commodity_group,
-        "lbs": round(lbs, 2),
         "freight_class_lbs": freight_class,
+        "lbs": round(lbs, 2),
+        "cwt_quantity": round(cwt_quantity, 2),
+        "weight_uom": "lbs",
         "rate_cwt": cwt_rate or "Missing rate",
         "discount_cwt": cwt_discount or "N/A",
         "estimated_cwt_cost": cwt_cost,
-        "sqyd": round(est_sqyd, 2),
+
+        "original_quantity": quantity,
+        "original_uom": original_uom,
+        "converted_sqyd": round(est_sqyd, 2),
         "freight_class_area": area_freight_class,
         "rate_area": "Not applicable" if area_cost == "Not applicable" else area_rate or "Missing rate",
         "discount_area": area_discount or "N/A",
         "estimated_area_cost": area_cost,
-        "uom": original_uom,        "est_pricing_basis": pricing_basis
+        "area_uom_used": "SQYD" if original_uom in ["SQFT", "SQYD"] else "N/A",
+        "est_pricing_basis": pricing_basis
     }
 
 
@@ -287,7 +293,8 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
                     "rate_area": "",
                     "discount_area": "",
                     "commodity_group": "",
-                    "uom": ""
+                    "uom": "",
+                    'est_pricing_basis': ""
                 })
 
         results = df.apply(safe_dual, axis=1)
