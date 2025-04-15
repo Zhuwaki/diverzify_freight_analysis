@@ -20731,3 +20731,21 @@
 2025-04-15 19:54:53,607 [ERROR] \u274c Row error: Quantity is out of range.
 2025-04-15 19:54:53,636 [ERROR] \u274c Row error: Quantity is out of range.
 2025-04-15 19:54:53,649 [ERROR] \u274c Row error: Quantity is out of range.
+2025-04-15 20:07:48,318 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 20:07:48,327 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 20:07:48,336 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 20:08:31,755 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 20:08:31,767 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 20:08:31,775 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 20:14:58,107 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 20:14:58,116 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 20:14:58,122 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 20:16:35,946 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 20:16:35,955 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 20:16:35,959 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 22:05:14,722 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 22:05:14,727 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 22:05:14,736 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 22:05:20,832 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 22:05:20,844 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 22:05:20,850 [INFO] \u2705 Conversion table loaded successfully.
