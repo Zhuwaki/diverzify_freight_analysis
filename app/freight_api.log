@@ -2200,3 +2200,9 @@
 2025-04-15 11:42:36,115 [INFO] \u2139\ufe0f Area pricing not available for SPW / SQYD / 1VNL
 2025-04-15 11:42:36,116 [INFO] \u2139\ufe0f Area pricing not available for SPW / SQYD / 1VNL
 2025-04-15 11:42:36,116 [INFO] \u2139\ufe0f Area pricing not available for SPW / SQYD / 1VNL
+2025-04-15 13:19:40,602 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 13:19:40,608 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 13:19:40,614 [INFO] \u2705 Conversion table loaded successfully.
+2025-04-15 13:19:40,625 [INFO] \U0001f4ca Columns in freight rate table: ['site', 'siteid', 'unit', 'unitclass', 'freightclass', 'oldfreightclass', 'commodity_group', 'commodity_description', 'l5c', '5c', '1m', '2m', '3m', '5m', '10m', '20m', '30m', '40m']
+2025-04-15 13:19:40,730 [INFO] \u2705 Rate table loaded successfully.
+2025-04-15 13:19:40,749 [INFO] \u2705 Conversion table loaded successfully.
