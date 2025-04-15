@@ -297,6 +297,7 @@ def healthcheck():
 @app.post("/batch")
 async def estimate_dual_batch(file: UploadFile = File(...)):
     try:
+        logging.info("📥 Received file in /batch: %s", file.filename)
         filename = file.filename.lower()
         if filename.endswith(".csv"):
             df = pd.read_csv(file.file)
@@ -346,7 +347,11 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
 
                 })
 
+        logging.info("🧹 Starting freight estimation pipeline...")
+        logging.info("Rows in file: %s", df.shape[0])
         results = df.apply(safe_dual, axis=1)
+        logging.info("✅ Freight estimation complete.")
+
         results.columns = [f"est_{col}" for col in results.columns]
         final_df = pd.concat([df, results], axis=1)
 

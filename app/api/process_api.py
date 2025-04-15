@@ -16,25 +16,36 @@ from utils.project_analysis_utils import (
 router = APIRouter()
 
 
+def safe_read_uploaded_file(file: UploadFile) -> pd.DataFrame:
+    contents = file.file.read()  # ✅ this reads ONCE
+    file.file.seek(0)            # ✅ reset pointer just in case
+
+    filename = file.filename.lower()
+
+    if filename.endswith(".csv"):
+        try:
+            return pd.read_csv(io.BytesIO(contents), encoding="utf-8")
+        except UnicodeDecodeError:
+            return pd.read_csv(io.BytesIO(contents), encoding="latin1")
+    elif filename.endswith(".xlsx"):
+        return pd.read_excel(io.BytesIO(contents), engine="openpyxl")
+    elif filename.endswith(".xls"):
+        return pd.read_excel(io.BytesIO(contents), engine="xlrd")
+    else:
+        raise ValueError("Unsupported file format")
+
+
+conversion_path = "app/conversion_table_standardized.csv"  # ✅ adjust if needed
+
+
 @router.post("/process")
 async def process_uploaded_file(file: UploadFile = File(...)):
     try:
-        contents = await file.read()
-        if file.filename.endswith(".csv"):
-            # handles special characters
-            df = pd.read_csv(io.BytesIO(contents), encoding="latin1")
-        elif file.filename.endswith(".xlsx"):
-            # force correct engine
-            df = pd.read_excel(io.BytesIO(contents), engine="openpyxl")
-        elif file.filename.endswith(".xls"):
-            # legacy Excel support
-            df = pd.read_excel(io.BytesIO(contents), engine="xlrd")
-        else:
-            return JSONResponse(status_code=400, content={"error": "Unsupported file format"})
+        df = safe_read_uploaded_file(file)  # ✅ safe reading
 
         cleaned_df = data_cleaning(df)
         cleaned_df = uom_cleaning(cleaned_df)
-        cleaned_df = flag_fully_converted_invoices(cleaned_df)
+        cleaned_df = flag_fully_converted_invoices(cleaned_df, conversion_path)
         enriched_df = enrich_invoice_flags(cleaned_df)
         enriched_df = add_freight_per_invoice(enriched_df)
 

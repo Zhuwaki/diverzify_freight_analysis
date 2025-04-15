@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-
-# In[ ]:
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 # Get full timestamp as string
@@ -17,38 +11,6 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Get just the date component as a datetime object
 date = datetime.now().strftime("%Y%m%d")
-
-
-# In[ ]:
-
-
-# Load your dataset
-file_path = "data/input/Freight_Cost_Analysis_CY2024-03.25.csv"
-raw = pd.read_csv(file_path, encoding="latin1", low_memory=False)
-raw.head(2)
-
-
-# In[ ]:
-
-
-#  === Load Commodity Groups ===
-# Load the commodity groups from the Excel file
-commodity = pd.read_excel(
-    'data/input/IFS Cloud Commodity Groups.xlsx', sheet_name='Commodity Groups')
-commodity.head()
-
-
-# In[ ]:
-
-
-#  === Load Manufacturers ===
-# Load the manufacturers from the Excel file
-manufacturer = pd.read_excel(
-    'data/input/Manufacturer List.xlsx', sheet_name='Sheet1')
-manufacturer.head()
-
-
-# In[ ]:
 
 
 # data cleaning function to standardise the description conversion
@@ -69,9 +31,6 @@ def classify_commodity(row):
         return desc  # Default fallback to original
 
 
-# In[ ]:
-
-
 # This function will classify the commodity from old codes to new codes
 def map_commodity_group(x):
     x_str = str(x).strip()  # Strip whitespace, just in case
@@ -85,18 +44,26 @@ def map_commodity_group(x):
     else:
         return x  # Keep original value if none of the above match
 
-
-# In[ ]:
+# This function will classify the commodity from old codes to new codes and merge with manufacturers
 
 
 def data_cleaning(input_df, commodity_df=None, manufacturer_df=None):
-    if commodity_df is None:
-        commodity_df = pd.read_excel(
-            "data/input/IFS Cloud Commodity Groups.xlsx", sheet_name='Commodity Groups', engine="openpyxl")
-    # Normalize column names to lowercase and replace spaces with underscores
-    if manufacturer_df is None:
-        manufacturer_df = pd.read_excel(
-            "/data/input/Manufacturer List.xlsx", sheet_name='Sheet1', engine="openpyxl")
+    logging.info("🔧 Running data_cleaning...")
+    try:
+        if commodity_df is None:
+            commodity_df = pd.read_excel(
+                "data/input/IFS Cloud Commodity Groups.xlsx", sheet_name='Commodity Groups', engine="openpyxl")
+    except Exception as e:
+        raise Exception(f"💥 Failed to load commodity_df: {str(e)}")
+
+    try:
+        if manufacturer_df is None:
+            manufacturer_df = pd.read_excel(
+                "data/input/Manufacturer List.xlsx", sheet_name='Sheet1', engine="openpyxl")
+    except Exception as e:
+        raise Exception(f"💥 Failed to load manufacturer_df: {str(e)}")
+    print(manufacturer_df)
+    print(commodity_df)
     # Normalize column names to lowercase and replace spaces with underscores
     # Normalize column names to lowercase and replace spaces with underscores
     input_df.columns = input_df.columns.str.strip().str.lower().str.replace(" ", "_")
@@ -147,20 +114,13 @@ def data_cleaning(input_df, commodity_df=None, manufacturer_df=None):
     input_commodity_manufactuer_df['conversion_code'] = input_commodity_manufactuer_df['new_commodity_description'].str.replace(' ', '_', regex=True).astype(
         str) + '_' + input_commodity_manufactuer_df['new_commodity_group'].astype(str) + '_' + input_commodity_manufactuer_df['inv_uom'].astype(str)
 
+    logging.info("✅ data_cleaning complete.")
+
     return input_commodity_manufactuer_df
 
 
-# In[ ]:
-
-
-testing_df = data_cleaning(raw, commodity, manufacturer)
-testing_df.head(2)
-
-
-# In[ ]:
-
-
 def uom_cleaning(df):
+    logging.info("✅ fixing unit of measure.")
     # checking which of the rows in an invoice matching 2008 has unclassified items
     # Check if all rows with account == 2008 are classified
     # Step 1: Identify invoice_ids where ALL rows with ACCOUNT == 2008 are classified
@@ -181,16 +141,6 @@ def uom_cleaning(df):
     return uom_output
 
 
-# In[ ]:
-
-
-testing_uom = uom_cleaning(testing_df)
-testing_uom.head(2)
-
-
-# In[ ]:
-
-
 def flag_fully_converted_invoices(df: pd.DataFrame, conversion_csv_path: str) -> pd.DataFrame:
     """
     Flags invoices where all account == 2008 rows have valid conversion codes.
@@ -202,6 +152,8 @@ def flag_fully_converted_invoices(df: pd.DataFrame, conversion_csv_path: str) ->
     Returns:
     - df: updated DataFrame with a boolean column 'all_2008_accounts_converted'
     """
+
+    logging.info("✅ Flagging fully converted invoices.")
     # Load and prepare conversion table
     rates_df = pd.read_csv(conversion_csv_path)
     rates_df['conversion_code'] = rates_df['conversion_code'].astype(str)
@@ -231,18 +183,8 @@ def flag_fully_converted_invoices(df: pd.DataFrame, conversion_csv_path: str) ->
     return df
 
 
-# In[ ]:
-
-
-testing_acc = flag_fully_converted_invoices(
-    testing_uom, 'app/conversion_table_standardized.csv')
-testing_acc.head(2)
-
-
-# In[ ]:
-
-
 def enrich_invoice_flags(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("✅ Enriching invoice data.")
     # Step 1: Flag invoices with at least one freight line (ACCOUNT == 5504)
     freight_invoice_ids = df[df['account'] == 5504]['invoice_id'].unique()
     df['has_freight_line'] = df['invoice_id'].isin(freight_invoice_ids)
@@ -304,50 +246,6 @@ def enrich_invoice_flags(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# In[ ]:
-
-
-testing_enriched = enrich_invoice_flags(testing_acc)
-testing_enriched.head(2)
-
-
-# In[ ]:
-
-
-testing_enriched.columns
-
-
-# ## Structuring the sample sizing
-
-# In[ ]:
-
-
-mapped_df = testing_enriched
-# === Step 0: Define sites and filter columns ===
-# site_list = ['SPJ', 'SPT', 'SPW']
-site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW']
-
-filter_columns = [
-    'all_accounts_2008_uom_classified',
-    'all_2008_accounts_converted',
-    'all__invoice_priority_products_(2008)',
-    'has_freight_line',
-]
-
-
-# === Step B: Apply combined filters ===
-filtered_df = mapped_df[
-    (mapped_df['all_accounts_2008_uom_classified'] == True) &
-    (mapped_df['all_2008_accounts_converted'] == True) &
-    (mapped_df['all__invoice_priority_products_(2008)'] == True) &
-    (mapped_df['has_freight_line'] == True) &
-    (mapped_df['site'].isin(site_list))
-]
-
-
-# In[ ]:
-
-
 def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
     """
     Adds a 'freight_per_invoice' column to the DataFrame where each row reflects
@@ -359,6 +257,7 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
     - df: updated DataFrame with 'freight_per_invoice' column
     """
+    logging.info("✅ Calculating freight per invoice.")
     # Step 1: Filter freight lines
     freight_lines = df[df['account'] == 5504]
 
@@ -375,28 +274,6 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
 
     # Step 4: Fill NaN with 0 (invoices with no freight)
     df['freight_per_invoice'] = df['freight_per_invoice'].fillna(0)
+    logging.info("✅ Completed adding freight to invoice.")
 
     return df
-
-
-# In[ ]:
-
-
-output_df = add_freight_per_invoice(filtered_df)
-output_df.head(2)
-
-
-# In[ ]:
-
-
-filtered_df = output_df[output_df['conversion_code'] != 'nan_nan_nan']
-# Create a new filename with the current timestamp
-filtered_df.to_excel(
-    f'data/output/{date}_modelling_input_v_{timestamp}.xlsx', index=False, engine='openpyxl')
-filtered_df.to_csv(
-    f'data/output/{date}_modelling_input_v_{timestamp}.csv', index=False,)
-
-# Save the filtered DataFrame to an Excel file
-
-
-#

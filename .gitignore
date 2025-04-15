@@ -12,3 +12,4 @@ app/freight_api.log
 app/freight_api.log
 *.log
 /app/__pycache__
+/downloads
