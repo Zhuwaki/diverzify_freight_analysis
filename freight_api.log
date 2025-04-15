@@ -1,0 +1,3 @@
+2025-04-16 01:37:14,795 [INFO] Rows in file: 2503
+2025-04-16 01:38:43,270 [ERROR] /batch error: "None of [Index(['est_cwt_min_applied', 'est_area_min_applied', 'est_min_rule_applied'], dtype='object')] are in the [columns]"
+2025-04-16 01:39:04,535 [INFO] Rows in file: 2503

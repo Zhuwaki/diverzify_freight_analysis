@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 import pandas as pd
@@ -8,14 +8,24 @@ import logging
 from datetime import datetime
 from typing import Optional, Tuple, Dict
 
-# Set up logging
+# Clear any existing handlers first
+import logging
+
+# Remove existing handlers if any
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+# ✅ Log to BOTH terminal and file
 logging.basicConfig(
-    filename="freight_api.log",
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("freight_api.log"),   # ← logs to file
+        logging.StreamHandler()                   # ← logs to terminal
+    ]
 )
 
-app = FastAPI(title="Freight Cost Estimator API", version="1.0")
+router = APIRouter()
 
 # === Constants ===
 class_breakpoints = [
@@ -25,8 +35,8 @@ class_breakpoints = [
     ("30M", 30000, 39999), ("40M", 40000, float("inf")),
 ]
 
-RATES_CSV_PATH = "freight_rates_updated.csv"
-CONVERSION_CSV_PATH = "conversion_table_standardized.csv"
+RATES_CSV_PATH = "data/input/freight_model/freight_rates_updated.csv"
+CONVERSION_CSV_PATH = "data/input/freight_model/conversion_table_standardized.csv"
 
 # === Discount structure (can be externalized later) ===
 discounts = {
@@ -180,6 +190,7 @@ def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, u
 
 
 def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str) -> Dict:
+    logging.info(f"📊 Calculating the dual freight costs")
     site = site.upper()
     min_charge = minimum_charges.get(site, 0)  # default to 0 if not defined
     try:
@@ -275,7 +286,7 @@ class EstimateRequest(BaseModel):
     site: str
 
 
-@app.post("/estimate")
+@router.post("/estimate")
 def estimate_dual(request: EstimateRequest):
     return estimate_dual_freight_cost(
         quantity=request.quantity,
@@ -284,17 +295,17 @@ def estimate_dual(request: EstimateRequest):
     )
 
 
-@app.get("/openapi.json")
+@router.get("/openapi.json")
 def get_openapi():
-    return app.openapi()
+    return router.openapi()
 
 
-@app.get("/healthcheck")
+@router.get("/healthcheck")
 def healthcheck():
-    return {"status": "ok", "version": app.version}
+    return {"status": "ok", "version": router.version}
 
 
-@app.post("/batch")
+@router.post("/batch")
 async def estimate_dual_batch(file: UploadFile = File(...)):
     try:
         logging.info("📥 Received file in /batch: %s", file.filename)
@@ -310,7 +321,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         df.columns = [col.strip().lower().replace(" ", "_")
                       for col in df.columns]
 
-        required = ["siteid", "quantity", "conversion_code", "po_no"]
+        required = ["site", "invoiced_line_qty", "conversion_code", "po_no"]
         missing = [col for col in required if col not in df.columns]
         if missing:
             return {"error": f"Missing columns: {', '.join(missing)}"}
@@ -323,9 +334,9 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         def safe_dual(row):
             try:
                 return pd.Series(estimate_dual_freight_cost(
-                    quantity=row["quantity"],
+                    quantity=row["invoiced_line_qty"],
                     conversion_code=row["conversion_code"],
-                    site=row["siteid"]
+                    site=row["site"]
                 ))
             except Exception as e:
                 logging.error(f"❌ Row error: {str(e)}")
@@ -364,7 +375,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
             'est_pricing_basis',
             'project_id', 'project_name', 'po_no', 'account', 'account_description',
             'siteid', 'site', 'supplierid', 'suppliername', 'partnumber',
-            'partdescription', 'est_commodity_group', 'new_commodity_description', 'quantity', 'invoice_id', 'invoice_no', 'uom',
+            'partdescription', 'est_commodity_group', 'new_commodity_description', 'invoiced_line_qty', 'invoice_id', 'invoice_no', 'uom',
             'est_pricing_basis',
             'conversion_code', 'match_supplier', 'est_estimated_area_cost',
             'est_estimated_cwt_cost', 'est_freight_class_area', 'est_freight_class_lbs',
@@ -402,7 +413,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         return {"error": str(e)}
 
 
-@app.get("/download/{filename}")
+@router.get("/download/{filename}")
 def download_result(filename: str):
     filepath = os.path.join("downloads", filename)
     if os.path.exists(filepath):

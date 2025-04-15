@@ -277,3 +277,19 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("✅ Completed adding freight to invoice.")
 
     return df
+
+
+def filter_valid_invoices(mapped_df):
+    site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW']
+
+    # Apply the filters
+    filtered_df = mapped_df[
+        (mapped_df['all_accounts_2008_uom_classified'] == True) &
+        (mapped_df['all_2008_accounts_converted'] == True) &
+        (mapped_df['all__invoice_priority_products_(2008)'] == True) &
+        (mapped_df['has_freight_line'] == True) &
+        (mapped_df['site'].isin(site_list))
+    ]
+    filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
+
+    return filtered_df
