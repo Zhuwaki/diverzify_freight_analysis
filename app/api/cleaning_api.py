@@ -51,8 +51,8 @@ async def clean_raw_file(file: UploadFile = File(...)):
 
         # ✅ Save cleaned output
         cleaned_filename = f"cleaned_{file.filename.replace(' ', '_')}"
-        output_path = os.path.join("downloads", cleaned_filename)
-        os.makedirs("downloads", exist_ok=True)
+        output_path = os.path.join("data/downloads", cleaned_filename)
+        os.makedirs("data/downloads", exist_ok=True)
         filtered_df.to_csv(output_path, index=False)
 
         return FileResponse(output_path, media_type="text/csv", filename=cleaned_filename)

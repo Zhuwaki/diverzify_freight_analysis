@@ -162,8 +162,8 @@ async def generate_freight_report(file1: UploadFile = File(...), file2: UploadFi
 
         # 📥 Save to file
         output_path = os.path.join(
-            "downloads", "freight_comparison_report.csv")
-        os.makedirs("downloads", exist_ok=True)
+            "data/downloads", "freight_comparison_report.csv")
+        os.makedirs("data/downloads", exist_ok=True)
         merged.to_csv(output_path, index=False)
 
         return FileResponse(output_path, media_type="text/csv", filename="freight_comparison_report.csv")
