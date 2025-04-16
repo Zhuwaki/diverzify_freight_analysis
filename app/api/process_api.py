@@ -71,6 +71,27 @@ async def process_uploaded_file(file: UploadFile = File(...)):
         filtered_df = filtered_df.where(pd.notnull(
             filtered_df), None)  # replaces NaN with None
         logging.info("🚚 Data filtered")
+        # 🧪 Save the DataFrame we're about to send for inspection
+        debug_dir = "debug_outputs"
+        os.makedirs(debug_dir, exist_ok=True)
+        has_nulls = filtered_df[filtered_df.isnull().any(axis=1)]
+        logging.info("🧪 Rows with nulls: %d", has_nulls.shape[0])
+        has_nulls.to_csv(os.path.join(
+            debug_dir, "rows_with_nulls.csv"), index=False)
+
+        filtered_df.to_csv(os.path.join(
+            debug_dir, "filtered_payload_before_api.csv"), index=False)
+
+        # Optional: Log null counts per column
+        null_summary = filtered_df.isnull().sum()
+        logging.info("🧪 Null count per column:\n%s", null_summary)
+        filtered_df.replace([float('inf'), float('-inf')], pd.NA, inplace=True)
+
+# Fill all null/blank cells with 0
+        filtered_df = filtered_df[~filtered_df.isna().any(axis=1)]
+        # filtered_df = filtered_df.fillna(0)
+        filtered_df.to_csv(os.path.join(
+            debug_dir, "filtered_payload_before_api2.csv"), index=False)
 
         # Send to freight API
         logging.info("📡 Sending file to /batch API")
@@ -83,7 +104,7 @@ async def process_uploaded_file(file: UploadFile = File(...)):
             response = requests.post(
                 "http://localhost:8000/api/batch/json",
                 json={"data": json.loads(json_payload)},
-                timeout=120  # 🔒 never let it hang forever
+                timeout=240  # 🔒 never let it hang forever
             )
             logging.info("📬 Received response: %s", response.status_code)
         except requests.exceptions.Timeout:

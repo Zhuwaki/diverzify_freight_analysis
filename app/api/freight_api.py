@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, ORJSONResponse
 from pydantic import BaseModel, Field
 import pandas as pd
 import io
@@ -7,6 +7,7 @@ import os
 import logging
 from datetime import datetime
 from typing import Optional, Tuple, Dict
+import orjson
 
 # Clear any existing handlers first
 import logging
@@ -295,16 +296,6 @@ def estimate_dual(request: EstimateRequest):
     )
 
 
-@router.get("/openapi.json")
-def get_openapi():
-    return router.openapi()
-
-
-@router.get("/healthcheck")
-def healthcheck():
-    return {"status": "ok", "version": router.version}
-
-
 @router.post("/batch")
 async def estimate_dual_batch(file: UploadFile = File(...)):
     try:
@@ -416,23 +407,27 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
 @router.post("/batch/json")
 async def process_batch_json(request: Request):
     import time
-    import os
-    import pandas as pd
-    import logging
-
     start_time = time.time()
     try:
         body = await request.json()
         records = body.get("data", [])
-        if not records:
-            logging.warning("⚠️ /batch/json received empty payload.")
-            return {"error": "No data received in JSON"}
 
         df = pd.DataFrame(records)
-        total_rows = len(df)
-        logging.info("✅ /batch/json received %s rows", total_rows)
 
-        def safe_dual(row):
+        # ✅ 1. Validate required columns
+        required_columns = ["invoiced_line_qty", "conversion_code", "site"]
+        missing_columns = [
+            col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            logging.error(f"Missing required columns: {missing_columns}")
+            return JSONResponse(status_code=400, content={"error": f"Missing columns: {missing_columns}"})
+
+        # ✅ 2. Log the input structure
+        logging.info(f"Received columns: {df.columns.tolist()}")
+        logging.info(f"Sample input:\n{df.head(3)}")
+
+        # ✅ 3. Safe row-wise processing
+        def safe_estimate_dual_freight_cost(row):
             try:
                 return pd.Series(estimate_dual_freight_cost(
                     quantity=row["invoiced_line_qty"],
@@ -440,45 +435,35 @@ async def process_batch_json(request: Request):
                     site=row["site"]
                 ))
             except Exception as e:
-                logging.error(f"❌ Row processing error: {str(e)}")
+                logging.error(f"❌ Error in row: {row} — {str(e)}")
                 return pd.Series({
-                    "estimated_cwt_cost": f"Error: {str(e)}",
-                    "freight_class_cwt": "",
-                    "rate_cwt": "",
-                    "discount_cwt": "",
-                    "estimated_area_cost": "",
-                    "freight_class_area": "",
-                    "rate_area": "",
-                    "discount_area": "",
-                    "commodity_group": "",
-                    "uom": "",
-                    'est_pricing_basis': "",
-                    'est_cwt_min_applied': "",
-                    'est_area_min_applied': "",
-                    'est_min_rule_applied': "",
+                    "estimated_cwt_cost": None,
+                    "freight_class_cwt": None,
+                    "rate_cwt": None,
+                    "discount_cwt": None,
+                    "estimated_area_cost": None,
+                    "freight_class_area": None,
+                    "rate_area": None,
+                    "discount_area": None,
+                    "commodity_group": None,
+                    "uom": None,
+                    "est_pricing_basis": None,
+                    "est_cwt_min_applied": None,
+                    "est_area_min_applied": None,
+                    "est_min_rule_applied": None
                 })
 
-        logging.info("🚀 Starting row-level freight estimation...")
-
-        results = []
-        for idx, row in df.iterrows():
-            enriched_row = safe_dual(row)
-            results.append(enriched_row)
-
-            if idx % 100 == 0 or idx == total_rows - 1:
-                logging.info("📈 Progress: %d/%d rows processed",
-                             idx + 1, total_rows)
-
-        results_df = pd.DataFrame(results)
+        logging.info("🚀 Running freight estimation...")
+        results_df = df.apply(safe_estimate_dual_freight_cost, axis=1)
         results_df.columns = [f"est_{col}" for col in results_df.columns]
         final_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)
 
-        # Replace non-serializable float values
+        # ✅ 4. Ensure JSON-serializable values
         final_df.replace([float("inf"), float("-inf")], None, inplace=True)
         final_df = final_df.where(pd.notnull(final_df), None)
 
         duration = round(time.time() - start_time, 2)
-        logging.info("✅ Completed /batch/json in %s seconds", duration)
+        logging.info("✅ Done: %s rows in %s seconds", len(df), duration)
 
         try:
             preview = final_df.head(5).to_dict(orient="records")
@@ -487,11 +472,14 @@ async def process_batch_json(request: Request):
             preview = []
 
         return {
-            "rows": total_rows,
+            "rows": len(final_df),
             "columns": final_df.columns.tolist(),
             "elapsed_seconds": duration,
             "preview": preview
         }
+    # Ensure all values are serializable
+        response_payload = json.loads(orjson.dumps(response_payload).decode())
+        return ORJSONResponse(content=response_payload)
 
     except Exception as e:
         logging.exception("❌ Fatal error in /batch/json")
