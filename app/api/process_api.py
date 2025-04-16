@@ -4,8 +4,12 @@ import io
 import requests
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+import math
+import time
+import os
 import json
+import requests
 
 from utils.project_analysis_utils import (
     data_cleaning,
@@ -19,126 +23,150 @@ from utils.project_analysis_utils import (
 router = APIRouter()
 
 
-def safe_read_uploaded_file(file: UploadFile) -> pd.DataFrame:
-    contents = file.file.read()  # ✅ this reads ONCE
-    file.file.seek(0)            # ✅ reset pointer just in case
+def prepare_output_data(df):
+    # --- Clean numeric fields that may contain errors or text ---
+    df['est_estimated_area_cost'] = pd.to_numeric(
+        df['est_estimated_area_cost'].astype(
+            str).str.extract(r'([-]?[0-9]*\.?[0-9]+)')[0],
+        errors='coerce'
+    )
 
-    filename = file.filename.lower()
+    df['est_estimated_cwt_cost'] = pd.to_numeric(
+        df['est_estimated_cwt_cost'].astype(
+            str).str.extract(r'([-]?[0-9]*\.?[0-9]+)')[0],
+        errors='coerce'
+    )
 
-    if filename.endswith(".csv"):
-        try:
-            return pd.read_csv(io.BytesIO(contents), encoding="utf-8")
-        except UnicodeDecodeError:
-            return pd.read_csv(io.BytesIO(contents), encoding="latin1")
-    elif filename.endswith(".xlsx"):
-        return pd.read_excel(io.BytesIO(contents), engine="openpyxl")
-    elif filename.endswith(".xls"):
-        return pd.read_excel(io.BytesIO(contents), engine="xlrd")
+    # --- Group by invoice_id and aggregate ---
+    df_output_freight = df.groupby(['site', 'invoice_id']).agg(
+        # total_quantity=('quantity', 'sum'),
+        total_estimated_area_cost=('est_estimated_area_cost', 'sum'),
+        total_estimated_cwt_cost=('est_estimated_cwt_cost', 'sum'),
+        total_est_lbs=('est_lbs', 'sum'),
+        total_est_sqyd=('est_sqyd', 'sum'),
+        unique_commodity_group_output=(
+            'est_commodity_group', lambda x: x.dropna().unique().tolist()),
+        unique_commodity_description_output=(
+            'new_commodity_description', lambda x: x.dropna().unique().tolist())
+    ).reset_index()
+
+    # View results
+    return df_output_freight
+
+
+def prepare_input_data(df):
+    # Get the unique commodity descriptions for each invoice_id amd the freight price from the modelled input
+    model_input_freight = df.groupby(['site', 'invoice_id']).agg(
+        freight_price=('freight_per_invoice', 'first'),
+        unique_commodity_group_input=(
+            'new_commodity_group', lambda x: x.dropna().unique().tolist()),
+        unique_commodity_description_input=(
+            'new_commodity_description', lambda x: x.dropna().unique().tolist())
+    ).reset_index()
+    return model_input_freight
+
+
+def cost_uom_format(df):
+    df['total_cost'] = df.apply(
+        lambda row: row['total_estimated_cwt_cost'] if '1VNL' in row['unique_commodity_group_input'] else (
+            row['total_estimated_area_cost'] if '1CBL' in row['unique_commodity_group_input'] else 0
+        ),
+        axis=1
+    )
+    # Step 3: Apply conditional logic
+    df['total_quantity'] = df.apply(
+        lambda row: row['total_est_lbs'] if '1VNL' in row['unique_commodity_group_input'] else (
+            row['total_est_sqyd'] if '1CBL' in row['unique_commodity_group_input'] else 0
+        ),
+        axis=1
+    )
+    df['UOM'] = df['unique_commodity_group_input'].apply(
+        lambda x: 'LBS' if '1VNL' in x else ('SQYD' if '1CBL' in x else None)
+    )
+    df['freight_ratio'] = (df['total_cost'] / df['freight_price']).round(2)
+    return df
+
+
+def analyze_freight_outliers(df: pd.DataFrame, ratio_col: str = "freight_ratio", plot: bool = True) -> pd.DataFrame:
+
+    # Step 2: Compute IQR bounds
+    q1 = df[ratio_col].quantile(0.25)
+    q3 = df[ratio_col].quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+
+    print(
+        f"Dynamic Outlier Thresholds:\nLower: {lower_bound:.2f} | Upper: {upper_bound:.2f}")
+
+    # Step 3: Tag outliers
+    df["outlier_flag"] = df[ratio_col].apply(
+        lambda x: "Lower" if x < lower_bound else (
+            "Upper" if x > upper_bound else "Normal")
+    )
+    df["savings"] = df[ratio_col].apply(lambda x: "Good" if x > 1 else "Bad")
+    df["action"] = df[ratio_col].apply(
+        lambda x: "Audit" if x > 2 or x < 0.5 else "Analyse")
+    return df
+
+
+def classify_shipment(row):
+    uom = row['UOM']
+    qty = row['total_quantity']
+
+    if uom == 'LBS':
+        return 'FTL' if qty >= 15000 else 'LTL'
+    elif uom == 'SQYD':
+        rolls = qty / 100
+        return 'FTL' if rolls >= 45 else 'LTL'
     else:
-        raise ValueError("Unsupported file format")
+        return 'Unknown'  # fallback for unexpected units
 
 
-# ✅ adjust if needed
-conversion_path = "data/input/freight_model/conversion_table_standardized.csv"
+def classify_load(df):
+    df['shipment_type'] = df.apply(classify_shipment, axis=1)
+    return df
 
 
-@router.post("/process")
-async def process_uploaded_file(file: UploadFile = File(...)):
+@router.post("/report")
+async def generate_freight_report(file1: UploadFile = File(...), file2: UploadFile = File(...)):
     try:
-        logging.info(
-            "📥 /process called — reading uploaded file: %s", file.filename)
+        def read_upload(upload: UploadFile) -> pd.DataFrame:
+            contents = upload.file.read()
+            upload.file.seek(0)
+            if upload.filename.endswith(".csv"):
+                try:
+                    return pd.read_csv(io.BytesIO(contents), encoding="utf-8")
+                except UnicodeDecodeError:
+                    return pd.read_csv(io.BytesIO(contents), encoding="latin1")
+            elif upload.filename.endswith((".xls", ".xlsx")):
+                return pd.read_excel(io.BytesIO(contents))
+            else:
+                raise ValueError("Unsupported file format")
 
-        df = safe_read_uploaded_file(file)
-        logging.info("✅ File loaded — %s rows", df.shape[0])
+        # 🔹 Load both dataframes
+        estimated_df = read_upload(file1)
+        actual_df = read_upload(file2)
 
-        cleaned_df = data_cleaning(df)
-        logging.info("🧹 Cleaning complete")
+        # 📊 Notebook logic — summarizing actual freight
+        actual_summary = prepare_output_data(estimated_df)
 
-        cleaned_df = uom_cleaning(cleaned_df)
-        logging.info("📏 UOM fix complete")
+        # 📈 Summarize estimated freight per invoice
+        estimated_summary = prepare_input_data(actual_df)
 
-        cleaned_df = flag_fully_converted_invoices(cleaned_df, conversion_path)
-        logging.info("🔁 Conversion flagging done")
+        # 🧩 Merge both
+        merged = estimated_summary.merge(
+            actual_summary, on=["site", "invoice_id"], how="outer")
+        merged = cost_uom_format(merged)
+        merged = classify_load(merged)
 
-        enriched_df = enrich_invoice_flags(cleaned_df)
-        logging.info("📦 Enrichment complete")
+        # 📥 Save to file
+        output_path = os.path.join(
+            "downloads", "freight_comparison_report.csv")
+        os.makedirs("downloads", exist_ok=True)
+        merged.to_csv(output_path, index=False)
 
-        enriched_df = add_freight_per_invoice(enriched_df)
-        logging.info("🚚 Freight per invoice added")
-
-        filtered_df = filter_valid_invoices(enriched_df)
-        filtered_df = filtered_df.replace([float('inf'), float('-inf')], None)
-        filtered_df = filtered_df.where(pd.notnull(
-            filtered_df), None)  # replaces NaN with None
-        logging.info("🚚 Data filtered")
-        # 🧪 Save the DataFrame we're about to send for inspection
-        debug_dir = "debug_outputs"
-        os.makedirs(debug_dir, exist_ok=True)
-        has_nulls = filtered_df[filtered_df.isnull().any(axis=1)]
-        logging.info("🧪 Rows with nulls: %d", has_nulls.shape[0])
-        has_nulls.to_csv(os.path.join(
-            debug_dir, "rows_with_nulls.csv"), index=False)
-
-        filtered_df.to_csv(os.path.join(
-            debug_dir, "filtered_payload_before_api.csv"), index=False)
-
-        # Optional: Log null counts per column
-        null_summary = filtered_df.isnull().sum()
-        logging.info("🧪 Null count per column:\n%s", null_summary)
-        filtered_df.replace([float('inf'), float('-inf')], pd.NA, inplace=True)
-
-        # Fill all null/blank cells with 0
-        filtered_df = filtered_df[~filtered_df.isna().any(axis=1)]
-        # filtered_df = filtered_df.fillna(0)
-        filtered_df.to_csv(os.path.join(
-            debug_dir, "filtered_payload_before_api2.csv"), index=False)
-        # Optional: Log null counts per column
-        null_summary = filtered_df.isnull().sum()
-        logging.info("🧪 Null count per column:\n%s", null_summary)
-
-        # Send to freight API
-        logging.info("📡 Sending file to /batch API")
-        # Convert DataFrame to JSON and send as a POST request
-        # 👇 Directory to save debug files
-        debug_dir = "debug_outputs"
-        os.makedirs(debug_dir, exist_ok=True)
-
-        # 👇 Prepare and save the final JSON payload
-        payload = {"data": filtered_df.to_dict(orient="records")}
-        json_debug_path = os.path.join(debug_dir, "payload_for_batch.json")
-
-        import json
-        with open(json_debug_path, "w") as f:
-            json.dump(payload, f, indent=2)
-        logging.info("📄 JSON payload saved to: %s", json_debug_path)
-
-        json_payload = filtered_df.to_json(orient="records")
-
-        print("json_payload", json_payload)
-        # Optional: Log the JSON payload size
-        logging.info("📡 JSON payload size: %s bytes", len(json_payload))
-
-        logging.info("📡 Sending JSON payload to /batch/json...")
-        try:
-            response = requests.post(
-                "http://localhost:8000/api/batch/json",
-                json={"data": json.loads(json_payload)},
-                timeout=240  # 🔒 never let it hang forever
-            )
-            logging.info("📬 Received response: %s", response.status_code)
-        except requests.exceptions.Timeout:
-            logging.error("⏱️ Timeout error — /batch/json took too long.")
-            return JSONResponse(status_code=504, content={"error": "Request to /batch/json timed out"})
-        except requests.exceptions.RequestException as e:
-            logging.error("❌ Request to /batch/json failed: %s", str(e))
-            return JSONResponse(status_code=502, content={"error": "Request to /batch/json failed", "detail": str(e)})
-        if response.status_code != 200:
-            logging.error("❌ /batch API failed: %s", response.text)
-            return {"error": "Freight API failed", "detail": response.text}
-
-        logging.info("✅ /batch API completed successfully")
-        return response.json()
+        return FileResponse(output_path, media_type="text/csv", filename="freight_comparison_report.csv")
 
     except Exception as e:
-        logging.exception("❌ Error in /process route")
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return {"error": str(e)}
