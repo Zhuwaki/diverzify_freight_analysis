@@ -37,9 +37,9 @@ discounts = {
 
 # === Minimum freight charge per site ===
 minimum_charges = {
-    "SPT": 0,
-    "SPW": 0,
-    "SPJ": 0,
+    "SPT": 95,
+    "SPW": 90,
+    "SPJ": 85,
     "DIT": 95.35,
     "SPN": 49.19,
 }
@@ -224,24 +224,6 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
     else:
         pricing_basis = "Not Applicable"
 
-    # Rule-based labeling for where minimum was applied
-    min_rule_applied = (
-        (commodity_group == "1VNL" and area_min_applied) or
-        (commodity_group == "1CBL" and cwt_min_applied)
-    )
-
-    raw_area_cost = None
-    if isinstance(area_cost, (int, float)):
-        raw_area_cost = area_cost
-        area_min_applied = raw_area_cost < min_charge
-        area_cost = round(max(raw_area_cost, min_charge), 2)
-    else:
-        area_min_applied = False
-
-    raw_cwt_cost = None
-    if not isinstance(cwt_cost, str):  # means it was calculated, not an error string
-        raw_cwt_cost = round(raw_cost, 2)
-
     return {
         "commodity_group": commodity_group,
         "freight_class_lbs": freight_class,
@@ -262,10 +244,7 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
         "estimated_area_cost": area_cost,
         "area_min_applied": area_min_applied,  # ← Add to return
         "area_uom_used": "SQYD" if original_uom in ["SQFT", "SQYD"] else "N/A",
-        "est_pricing_basis": pricing_basis,
-        "min_rule_applied": min_rule_applied,
-        "raw_area_cost": raw_area_cost,
-        "raw_cwt_cost": raw_cwt_cost,
+        "est_pricing_basis": pricing_basis
     }
 
 
@@ -340,10 +319,8 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
                     "commodity_group": "",
                     "uom": "",
                     'est_pricing_basis': "",
-                    'est_cwt_min_applied': "",
-                    'est_area_min_applied': "",
-                    'est_min_rule_applied': "",
-
+                    'cwt_min_applied': "",
+                    'area_min_applied': "",
                 })
 
         results = df.apply(safe_dual, axis=1)
@@ -364,26 +341,12 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
             'conversion_code', 'match_supplier', 'est_estimated_area_cost',
             'est_estimated_cwt_cost', 'est_freight_class_area', 'est_freight_class_lbs',
             'est_lbs', 'est_rate_area', 'est_rate_cwt', 'est_sqyd', 'est_uom', 'multiple_parts', 'est_cwt_min_applied',
-            'est_area_min_applied', 'est_min_rule_applied', 'est_raw_area_cost',
-            'est_raw_cwt_cost',
-
+            'est_area_min_applied',
         ]
 
         export_columns = [
             col for col in model_columns if col in final_df.columns]
-
-        print("🧪 FINAL COLUMNS:", final_df.columns.tolist())
-        if 'est_cwt_min_applied' in final_df.columns and 'est_area_min_applied' in final_df.columns:
-            print("🧪 SAMPLE VALUES:")
-            print(final_df[['est_cwt_min_applied',
-                  'est_area_min_applied', 'est_min_rule_applied']].head())
-        else:
-            print(
-                "🧪 MISSING one or both of: 'est_cwt_min_applied', 'est_area_min_applied'")
-
         final_df[export_columns].to_csv(final_path, index=False)
-        print(final_df[['est_cwt_min_applied', 'est_area_min_applied',
-              'est_min_rule_applied']].head())
 
         return {
             "filename": file.filename,
