@@ -64,6 +64,7 @@ def cost_uom_format(df):
     df['freight_ratio'] = (df['total_cost'] / df['freight_price']).round(2)
     df['market_rate'] = (df['freight_price'] / df['total_quantity']).round(2)
     df['xgs_rate'] = (df['total_cost'] / df['total_quantity']).round(2)
+    df['rate_ratio'] = (df['xgs_rate'] / df['market_rate']).round(2)
     return df
 
 
