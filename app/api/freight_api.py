@@ -416,6 +416,10 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
 @router.post("/batch/json")
 async def process_batch_json(request: Request):
     import time
+    import os
+    import pandas as pd
+    import logging
+
     start_time = time.time()
     try:
         body = await request.json()
@@ -469,19 +473,29 @@ async def process_batch_json(request: Request):
         results_df.columns = [f"est_{col}" for col in results_df.columns]
         final_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)
 
+        # Replace non-serializable float values
+        final_df.replace([float("inf"), float("-inf")], None, inplace=True)
+        final_df = final_df.where(pd.notnull(final_df), None)
+
         duration = round(time.time() - start_time, 2)
         logging.info("✅ Completed /batch/json in %s seconds", duration)
+
+        try:
+            preview = final_df.head(5).to_dict(orient="records")
+        except Exception as preview_error:
+            logging.error(f"❌ Error generating preview: {preview_error}")
+            preview = []
 
         return {
             "rows": total_rows,
             "columns": final_df.columns.tolist(),
             "elapsed_seconds": duration,
-            "preview": final_df.head(5).to_dict(orient="records")
+            "preview": preview
         }
 
     except Exception as e:
         logging.exception("❌ Fatal error in /batch/json")
-        return {"error": str(e)}
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @router.get("/download/{filename}")
