@@ -9,5 +9,5 @@ Freight_Analysis_Enriched_Output.csv
 /app/downloads
 app/freight_api.log
 *.log
-/app/_pycache_
-
+/app/__pycache__
+/downloads
