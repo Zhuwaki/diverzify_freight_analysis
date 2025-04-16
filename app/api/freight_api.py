@@ -254,30 +254,32 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
     if not isinstance(cwt_cost, str):  # means it was calculated, not an error string
         raw_cwt_cost = round(raw_cost, 2)
 
+    def safe(x, fallback=0):
+        return x if pd.notna(x) and x != "NaN" else fallback
+
     return {
         "commodity_group": commodity_group,
         "freight_class_lbs": freight_class,
         "lbs": round(lbs, 2),
         "cwt_quantity": round(cwt_quantity, 2),
         "weight_uom": "lbs",
-        "rate_cwt": cwt_rate or "Missing rate",
-        "discount_cwt": cwt_discount or "N/A",
-        "estimated_cwt_cost": cwt_cost,
-        "cwt_min_applied": cwt_min_applied,  # ← Add to return
-
+        "rate_cwt": safe(cwt_rate, "Missing rate"),
+        "discount_cwt": safe(cwt_discount, "N/A"),
+        "estimated_cwt_cost": safe(cwt_cost),
+        "cwt_min_applied": bool(cwt_min_applied),
         "original_quantity": quantity,
         "original_uom": original_uom,
         "converted_sqyd": round(est_sqyd, 2),
-        "freight_class_area": area_freight_class,
-        "rate_area": "Not applicable" if area_cost == "Not applicable" else area_rate or "Missing rate",
-        "discount_area": area_discount or "N/A",
-        "estimated_area_cost": area_cost,
-        "area_min_applied": area_min_applied,  # ← Add to return
+        "freight_class_area": safe(area_freight_class, "N/A"),
+        "rate_area": safe(area_rate, "Missing rate"),
+        "discount_area": safe(area_discount, "N/A"),
+        "estimated_area_cost": safe(area_cost, "Not applicable"),
+        "area_min_applied": bool(area_min_applied),
         "area_uom_used": "SQYD" if original_uom in ["SQFT", "SQYD"] else "N/A",
         "est_pricing_basis": pricing_basis,
-        "min_rule_applied": min_rule_applied,
-        "raw_area_cost": raw_area_cost,
-        "raw_cwt_cost": raw_cwt_cost,
+        "min_rule_applied": bool(min_rule_applied),
+        "raw_area_cost": safe(raw_area_cost),
+        "raw_cwt_cost": safe(raw_cwt_cost),
     }
 
 
@@ -454,6 +456,25 @@ async def process_batch_json(request: Request):
                 })
 
         logging.info("🚀 Running freight estimation...")
+        results = []
+        for idx, row in df.iterrows():
+            enriched_row = safe_estimate_dual_freight_cost(row)
+            results.append(enriched_row)
+
+        # ⬇️ ⬇️ INSERT HERE ⬇️ ⬇️
+        results_df = pd.DataFrame(results)
+
+        # 🔍 Debug bad values before renaming or merging
+        bad_rows = results_df.replace(
+            [float("inf"), float("-inf")], pd.NA).isnull().any(axis=1)
+        if bad_rows.any():
+            logging.warning(
+                "⚠️ Found %s bad rows in output — logging sample", bad_rows.sum())
+            os.makedirs("debug_outputs", exist_ok=True)
+            sample = results_df[bad_rows].head(3)
+            sample.to_csv(
+                "debug_outputs/bad_rows_from_estimation.csv", index=False)
+
         results_df = df.apply(safe_estimate_dual_freight_cost, axis=1)
         results_df.columns = [f"est_{col}" for col in results_df.columns]
         final_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)

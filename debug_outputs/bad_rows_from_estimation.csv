@@ -1,0 +1,4 @@
+commodity_group,freight_class_lbs,lbs,cwt_quantity,weight_uom,rate_cwt,discount_cwt,estimated_cwt_cost,cwt_min_applied,original_quantity,original_uom,converted_sqyd,freight_class_area,rate_area,discount_area,estimated_area_cost,area_min_applied,area_uom_used,est_pricing_basis,min_rule_applied,raw_area_cost,raw_cwt_cost,freight_class_cwt,uom,est_cwt_min_applied,est_area_min_applied,est_min_rule_applied
+1VNL,1M,1172.06,11.72,lbs,17.48,1.0,204.88,False,1013.89,SQFT,112.65,,Not applicable,N/A,Not applicable,False,SQYD,CWT,False,,204.88,,,,,
+1VNL,L5C,208.08,2.08,lbs,28.27,1.0,95.35,True,180.0,SQFT,20.0,,Not applicable,N/A,Not applicable,False,SQYD,CWT,False,,58.82,,,,,
+1VNL,3M,3495.08,34.95,lbs,13.88,1.0,485.12,False,3134.6,SQFT,348.29,,Not applicable,N/A,Not applicable,False,SQYD,CWT,False,,485.12,,,,,

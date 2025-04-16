@@ -92,12 +92,19 @@ async def process_uploaded_file(file: UploadFile = File(...)):
         # filtered_df = filtered_df.fillna(0)
         filtered_df.to_csv(os.path.join(
             debug_dir, "filtered_payload_before_api2.csv"), index=False)
+        # Optional: Log null counts per column
+        null_summary = filtered_df.isnull().sum()
+        logging.info("🧪 Null count per column:\n%s", null_summary)
 
         # Send to freight API
         logging.info("📡 Sending file to /batch API")
         # Convert DataFrame to JSON and send as a POST request
 
         json_payload = filtered_df.to_json(orient="records")
+
+        print("json_payload", json_payload)
+        # Optional: Log the JSON payload size
+        logging.info("📡 JSON payload size: %s bytes", len(json_payload))
 
         logging.info("📡 Sending JSON payload to /batch/json...")
         try:
