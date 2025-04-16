@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 import pandas as pd
@@ -410,6 +410,77 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
 
     except Exception as e:
         logging.error(f"/batch error: {str(e)}")
+        return {"error": str(e)}
+
+
+@router.post("/batch/json")
+async def process_batch_json(request: Request):
+    import time
+    start_time = time.time()
+    try:
+        body = await request.json()
+        records = body.get("data", [])
+        if not records:
+            logging.warning("⚠️ /batch/json received empty payload.")
+            return {"error": "No data received in JSON"}
+
+        df = pd.DataFrame(records)
+        total_rows = len(df)
+        logging.info("✅ /batch/json received %s rows", total_rows)
+
+        def safe_dual(row):
+            try:
+                return pd.Series(estimate_dual_freight_cost(
+                    quantity=row["invoiced_line_qty"],
+                    conversion_code=row["conversion_code"],
+                    site=row["site"]
+                ))
+            except Exception as e:
+                logging.error(f"❌ Row processing error: {str(e)}")
+                return pd.Series({
+                    "estimated_cwt_cost": f"Error: {str(e)}",
+                    "freight_class_cwt": "",
+                    "rate_cwt": "",
+                    "discount_cwt": "",
+                    "estimated_area_cost": "",
+                    "freight_class_area": "",
+                    "rate_area": "",
+                    "discount_area": "",
+                    "commodity_group": "",
+                    "uom": "",
+                    'est_pricing_basis': "",
+                    'est_cwt_min_applied': "",
+                    'est_area_min_applied': "",
+                    'est_min_rule_applied': "",
+                })
+
+        logging.info("🚀 Starting row-level freight estimation...")
+
+        results = []
+        for idx, row in df.iterrows():
+            enriched_row = safe_dual(row)
+            results.append(enriched_row)
+
+            if idx % 100 == 0 or idx == total_rows - 1:
+                logging.info("📈 Progress: %d/%d rows processed",
+                             idx + 1, total_rows)
+
+        results_df = pd.DataFrame(results)
+        results_df.columns = [f"est_{col}" for col in results_df.columns]
+        final_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)
+
+        duration = round(time.time() - start_time, 2)
+        logging.info("✅ Completed /batch/json in %s seconds", duration)
+
+        return {
+            "rows": total_rows,
+            "columns": final_df.columns.tolist(),
+            "elapsed_seconds": duration,
+            "preview": final_df.head(5).to_dict(orient="records")
+        }
+
+    except Exception as e:
+        logging.exception("❌ Fatal error in /batch/json")
         return {"error": str(e)}
 
 

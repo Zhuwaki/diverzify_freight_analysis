@@ -62,8 +62,8 @@ def data_cleaning(input_df, commodity_df=None, manufacturer_df=None):
                 "data/input/Manufacturer List.xlsx", sheet_name='Sheet1', engine="openpyxl")
     except Exception as e:
         raise Exception(f"💥 Failed to load manufacturer_df: {str(e)}")
-    print(manufacturer_df)
-    print(commodity_df)
+    # print(manufacturer_df)
+    # print(commodity_df)
     # Normalize column names to lowercase and replace spaces with underscores
     # Normalize column names to lowercase and replace spaces with underscores
     input_df.columns = input_df.columns.str.strip().str.lower().str.replace(" ", "_")

@@ -5,6 +5,7 @@ import requests
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
+import json
 
 from utils.project_analysis_utils import (
     data_cleaning,
@@ -66,21 +67,31 @@ async def process_uploaded_file(file: UploadFile = File(...)):
         logging.info("🚚 Freight per invoice added")
 
         filtered_df = filter_valid_invoices(enriched_df)
+        filtered_df = filtered_df.replace([float('inf'), float('-inf')], None)
+        filtered_df = filtered_df.where(pd.notnull(
+            filtered_df), None)  # replaces NaN with None
         logging.info("🚚 Data filtered")
-
-        # Save intermediate file
-        os.makedirs("downloads", exist_ok=True)
-        temp_path = os.path.join("downloads", "intermediate_cleaned.csv")
-        filtered_df.to_csv(temp_path, index=False)
-        logging.info("💾 Intermediate file saved: %s", temp_path)
 
         # Send to freight API
         logging.info("📡 Sending file to /batch API")
-        with open(temp_path, "rb") as f:
-            logging.info("📦 File size (bytes): %s", os.path.getsize(temp_path))
-            response = requests.post(
-                "http://localhost:8000/batch", files={"file": f})
+        # Convert DataFrame to JSON and send as a POST request
 
+        json_payload = filtered_df.to_json(orient="records")
+
+        logging.info("📡 Sending JSON payload to /batch/json...")
+        try:
+            response = requests.post(
+                "http://localhost:8000/api/batch/json",
+                json={"data": json.loads(json_payload)},
+                timeout=120  # 🔒 never let it hang forever
+            )
+            logging.info("📬 Received response: %s", response.status_code)
+        except requests.exceptions.Timeout:
+            logging.error("⏱️ Timeout error — /batch/json took too long.")
+            return JSONResponse(status_code=504, content={"error": "Request to /batch/json timed out"})
+        except requests.exceptions.RequestException as e:
+            logging.error("❌ Request to /batch/json failed: %s", str(e))
+            return JSONResponse(status_code=502, content={"error": "Request to /batch/json failed", "detail": str(e)})
         if response.status_code != 200:
             logging.error("❌ /batch API failed: %s", response.text)
             return {"error": "Freight API failed", "detail": response.text}
