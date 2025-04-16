@@ -87,7 +87,7 @@ async def process_uploaded_file(file: UploadFile = File(...)):
         logging.info("🧪 Null count per column:\n%s", null_summary)
         filtered_df.replace([float('inf'), float('-inf')], pd.NA, inplace=True)
 
-# Fill all null/blank cells with 0
+        # Fill all null/blank cells with 0
         filtered_df = filtered_df[~filtered_df.isna().any(axis=1)]
         # filtered_df = filtered_df.fillna(0)
         filtered_df.to_csv(os.path.join(
@@ -99,6 +99,18 @@ async def process_uploaded_file(file: UploadFile = File(...)):
         # Send to freight API
         logging.info("📡 Sending file to /batch API")
         # Convert DataFrame to JSON and send as a POST request
+        # 👇 Directory to save debug files
+        debug_dir = "debug_outputs"
+        os.makedirs(debug_dir, exist_ok=True)
+
+        # 👇 Prepare and save the final JSON payload
+        payload = {"data": filtered_df.to_dict(orient="records")}
+        json_debug_path = os.path.join(debug_dir, "payload_for_batch.json")
+
+        import json
+        with open(json_debug_path, "w") as f:
+            json.dump(payload, f, indent=2)
+        logging.info("📄 JSON payload saved to: %s", json_debug_path)
 
         json_payload = filtered_df.to_json(orient="records")
 

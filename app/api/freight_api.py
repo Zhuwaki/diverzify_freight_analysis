@@ -254,8 +254,10 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
     if not isinstance(cwt_cost, str):  # means it was calculated, not an error string
         raw_cwt_cost = round(raw_cost, 2)
 
-    def safe(x, fallback=0):
-        return x if pd.notna(x) and x != "NaN" else fallback
+    def safe(x, fallback="N/A"):
+        if pd.isna(x) or x in [float("inf"), float("-inf")]:
+            return fallback
+        return x
 
     return {
         "commodity_group": commodity_group,
@@ -263,23 +265,28 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
         "lbs": round(lbs, 2),
         "cwt_quantity": round(cwt_quantity, 2),
         "weight_uom": "lbs",
-        "rate_cwt": safe(cwt_rate, "Missing rate"),
-        "discount_cwt": safe(cwt_discount, "N/A"),
-        "estimated_cwt_cost": safe(cwt_cost),
+        "rate_cwt": safe(cwt_rate, 0),
+        "discount_cwt": safe(cwt_discount, 0),
+        "estimated_cwt_cost": safe(cwt_cost, 0),
         "cwt_min_applied": bool(cwt_min_applied),
         "original_quantity": quantity,
         "original_uom": original_uom,
         "converted_sqyd": round(est_sqyd, 2),
-        "freight_class_area": safe(area_freight_class, "N/A"),
-        "rate_area": safe(area_rate, "Missing rate"),
-        "discount_area": safe(area_discount, "N/A"),
-        "estimated_area_cost": safe(area_cost, "Not applicable"),
+        "freight_class_area": safe(area_freight_class),
+        "rate_area": safe(area_rate, 0),
+        "discount_area": safe(area_discount, 0),
+        "estimated_area_cost": safe(area_cost, 0),
         "area_min_applied": bool(area_min_applied),
         "area_uom_used": "SQYD" if original_uom in ["SQFT", "SQYD"] else "N/A",
         "est_pricing_basis": pricing_basis,
         "min_rule_applied": bool(min_rule_applied),
-        "raw_area_cost": safe(raw_area_cost),
-        "raw_cwt_cost": safe(raw_cwt_cost),
+        "raw_area_cost": safe(raw_area_cost, 0),
+        "raw_cwt_cost": safe(raw_cwt_cost, 0),
+        "freight_class_cwt": safe(freight_class),  # NEW
+        "uom": safe(original_uom),                 # NEW
+        "est_cwt_min_applied": bool(cwt_min_applied),  # NEW
+        "est_area_min_applied": bool(area_min_applied),  # NEW
+        "est_min_rule_applied": bool(min_rule_applied),  # NEW
     }
 
 
