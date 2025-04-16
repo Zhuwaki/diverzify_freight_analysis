@@ -100,10 +100,10 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         results.columns = [f"est_{col}" for col in results.columns]
         final_df = pd.concat([df, results], axis=1)
 
-        os.makedirs("downloads", exist_ok=True)
+        os.makedirs("data/downloads", exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = f"freight_dual_results_{timestamp}.csv"
-        final_path = os.path.join("downloads", output_file)
+        final_path = os.path.join("data/downloads", output_file)
         # Define the desired export columns
         model_columns = [
             'est_pricing_basis',
