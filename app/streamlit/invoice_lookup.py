@@ -7,7 +7,7 @@ import os
 
 @st.cache
 def load_data():
-    path = "../data/input/Freight_Cost_Analysis_CY2024-03.25.csv"
+    path = "../../data/input/Freight_Cost_Analysis_CY2024-03.25.csv"
     if not os.path.exists(path):
         st.error(f"❌ File not found: {path}")
         return pd.DataFrame()  # return empty DataFrame for safety
