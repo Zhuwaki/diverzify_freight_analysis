@@ -12,6 +12,9 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 # Get just the date component as a datetime object
 date = datetime.now().strftime("%Y%m%d")
 
+# === Configurable discount factor for market comparison ===
+MARKET_RATE_DISCOUNT = 0.30  # 30% reduction
+
 
 # data cleaning function to standardise the description conversion
 # This function will classify the commodity based on the description
@@ -279,8 +282,26 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def apply_market_freight_discount(df: pd.DataFrame, column="freight_per_invoice") -> pd.DataFrame:
+    """
+    Adds a new column with the adjusted market freight rate.
+
+    Parameters:
+    - df: input DataFrame
+    - column: name of column containing original freight values
+
+    Returns:
+    - DataFrame with new column 'adjusted_freight_price'
+    """
+    logging.info(
+        f"✅ Applying market freight discount of {MARKET_RATE_DISCOUNT*100:.0f}% to '{column}'...")
+    df['adjusted_freight_price'] = df[column] * (1 - MARKET_RATE_DISCOUNT)
+    return df
+
+
 def filter_valid_invoices(mapped_df):
-    site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW']
+    site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW',
+                 'SPCP', 'SPHU', 'KUS', 'PVF', 'SPTM']
 
     # Apply the filters
     filtered_df = mapped_df[

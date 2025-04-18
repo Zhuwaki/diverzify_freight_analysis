@@ -5,7 +5,7 @@ import io
 import os
 import logging
 from datetime import datetime
-from utils.model_analysis_utils import estimate_dual_freight_cost, conversion_lookup
+from utils.freight_model_utils import estimate_dual_freight_cost, conversion_lookup
 
 router = APIRouter()
 
