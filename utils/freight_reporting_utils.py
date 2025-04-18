@@ -73,11 +73,11 @@ def cost_uom_format(df):
         (1 -
          MARKET_RATE_DISCOUNT) if APPLY_MARKET_DISCOUNT else df['freight_price']
     df['freight_ratio'] = (
-        df['total_cost'] / df['adjusted_freight_price']).round(2)
+        df['adjusted_freight_price'] / df['total_cost']).round(2)
     df['market_rate'] = (df['adjusted_freight_price'] /
                          df['total_quantity']).round(2)
     df['xgs_rate'] = (df['total_cost'] / df['total_quantity']).round(2)
-    df['rate_ratio'] = (df['xgs_rate'] / df['market_rate']).round(2)
+    df['rate_ratio'] = (df['market_rate'] / df['xgs_rate']).round(2)
     return df
 
 
