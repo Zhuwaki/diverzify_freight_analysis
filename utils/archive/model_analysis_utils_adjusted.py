@@ -19,20 +19,70 @@ class_breakpoints = [
 
 # === Discount structure (can be externalized later) ===
 discounts = {
-    "CWT": {"SPT": 1, "SPW": 1, "SPJ": 1},
-    "SQFT": {"SPT": 1, "SPW": 1, "SPJ": 1},
-    "SQYD": {"SPT": 1, "SPW": 1, "SPJ": 1}
+    "CWT": {"SPT": 1, "SPW": 1, "SPJ": 1, "DIT": 1, "SPN": 1, 'SPCP': 1, 'KUS': 1, 'SPHU': 1, 'PVF': 1, 'SPTM': 1},
+    "SQFT": {"SPT": 1, "SPW": 1, "SPJ": 1, "DIT": 1, "SPN": 1, "SPCP": 1, "KUS": 1, "SPHU": 1, "PVF": 1, "SPTM": 1},
+    "SQYD": {"SPT": 1, "SPW": 1, "SPJ": 1, "DIT": 1, "SPN": 1, "SPCP": 1, "KUS": 1, "SPHU": 1, "PVF": 1, "SPTM": 1},
 }
 
 # === Minimum freight charge per site ===
 minimum_charges = {
-    "SPT": 0,
-    "SPW": 0,
-    "SPJ": 0,
-    "DIT": 95.35,
-    "SPN": 49.19,
+    "SPT": {
+        '1CBL': 0,
+        '1VNL': 0,
+        '1CPT': 0
+    },
+    "SPW": {
+        '1CBL': 0,
+        '1VNL': 0,
+        '1CPT': 0
+    },
+    "SPJ": {
+        '1CBL': 0,
+        '1VNL': 0,
+        '1CPT': 0
+    },
+    "DIT": {
+        '1CBL': 52.59,
+        '1VNL': 115.21,
+        '1CPT': 52.59
+    },
+    "SPN": {
+        '1CBL': 49.19,
+        '1VNL': 95.35,
+        '1CPT': 49.19
+    },
+    "SPCP": {
+        '1CBL': 62.45,
+        '1VNL': 108.59,
+        '1CPT': 62.45
+    },
+    'SPHU': {
+        '1CBL': 62.45,
+        '1VNL': 101.96,
+        '1CPT': 62.45
+    },
+    'SPTM': {
+        '1CBL': 84.89,
+        '1VNL': 135.07,
+        '1CPT': 84.89
+    },
+    'PVF': {
+        '1CBL': 79.38,
+        '1VNL': 108.59,
+        '1CPT': 79.38
+    },
+    "KUS": {
+        '1CBL': 52.59,
+        '1VNL': 115.21,
+        '1CPT': 52.59
+    }
 }
 # === Loaders ===
+
+
+# === Adjustable Rate Reduction Factors ===
+MARKET_RATE_DISCOUNT = 0.30  # 30% off market freight price
+XGS_RATE_DISCOUNT = 0.06     # 6% off XGS rates from the freight table
 
 
 def load_rate_table_from_csv(filepath: str) -> Dict:
@@ -67,8 +117,9 @@ def load_rate_table_from_csv(filepath: str) -> Dict:
             rate = row[col]
             try:
                 if pd.notna(rate):
-                    rate_table[site][unit][commodity][col.upper()
-                                                      ] = float(rate)
+                    rate_table[site][unit][commodity][col.upper()] = float(
+                        rate) * (1 - XGS_RATE_DISCOUNT)
+
             except ValueError:
                 logging.warning(
                     f"⚠️ Skipped non-numeric rate '{rate}' in column '{col}' for {site}/{unit}/{commodity}")
@@ -158,13 +209,22 @@ def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, u
             f"ℹ️ Area pricing not available for {site} / {uom} / {commodity_group}")
         return "Not applicable", None, None, None
 
-    freight_class = get_priority_class(quantity)
+    try:
+        freight_class = get_priority_class(quantity)
+    except Exception as e:
+        return f"Freight class error: {e}", None, None, None
+
     rate = rates[site][uom][commodity_group].get(freight_class)
     if rate is None:
         return "Missing class column", freight_class, None, None
 
     discount = discounts.get(uom, {}).get(site, 1)
-    cost = round(rate * discount * quantity, 2)
+    raw_cost = round(rate * discount * quantity, 2)
+    # 👇 Fetch minimum charge by site and commodity group
+    min_charge = minimum_charges.get(
+        site, {}).get(commodity_group, 0)
+    cost = round(max(raw_cost, min_charge), 2)
+
     return cost, freight_class, rate, discount
 
 
@@ -178,24 +238,41 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
     except Exception as e:
         return {"error": f"Conversion failed: {str(e)}"}
 
-    cwt_quantity = lbs / 100
-    freight_class = get_priority_class(lbs)
-    cwt_rate, cwt_error = get_freight_rate(
-        site, "CWT", commodity_group, freight_class)
+    # 👇 Fetch min_charge by site and commodity_group
+    min_charge = minimum_charges.get(site, {}).get(commodity_group, 0)
 
-    if cwt_error:
-        cwt_cost = cwt_error
-        cwt_discount = None
-        cwt_min_applied = False  # ← Add tracking for min logic
+    if commodity_group == "1VNL":
+        cwt_quantity = lbs / 100
+        freight_class = get_priority_class(lbs)
+        cwt_rate, cwt_error = get_freight_rate(
+            site, "CWT", commodity_group, freight_class
+        )
+
+        if cwt_error:
+            cwt_cost = cwt_error
+            cwt_discount = None
+            cwt_min_applied = False
+        else:
+            cwt_discount = discounts.get("CWT", {}).get(site, 1)
+            raw_cost = cwt_rate * cwt_discount * cwt_quantity
+            cwt_cost = round(max(raw_cost, min_charge), 2)
+            cwt_min_applied = raw_cost < min_charge
     else:
-        cwt_discount = discounts.get("CWT", {}).get(site, 1)
-        raw_cost = cwt_rate * cwt_discount * cwt_quantity
-        cwt_cost = round(max(raw_cost, min_charge), 2)  # ← Apply minimum
-        cwt_min_applied = raw_cost < min_charge
+        cwt_cost = "Not applicable"
+        cwt_rate = None
+        cwt_discount = None
+        cwt_quantity = None
+        freight_class = None
+        cwt_min_applied = False
 
     est_sqyd = sqft_to_sqyd(quantity) if original_uom == "SQFT" else quantity
-    area_cost, area_freight_class, area_rate, area_discount = estimate_area_based_cost(
-        quantity, site, commodity_group, original_uom)
+
+    if commodity_group in ["1CPT", "1CBL"]:
+        area_cost, area_freight_class, area_rate, area_discount = estimate_area_based_cost(
+            quantity, site, commodity_group, original_uom
+        )
+    else:
+        area_cost, area_freight_class, area_rate, area_discount = "Not applicable", None, None, None
 
     if isinstance(area_cost, (int, float)):
         raw_area_cost = area_cost
@@ -204,13 +281,10 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
     else:
         area_min_applied = False
 
-    # Determine pricing basis based on which estimate succeeded
-    if isinstance(cwt_cost, (int, float)) and isinstance(area_cost, str):
+    if commodity_group == "1VNL":
         pricing_basis = "CWT"
-    elif isinstance(area_cost, (int, float)) and isinstance(cwt_cost, str):
+    elif commodity_group in ["1CBL", "1CPT"]:
         pricing_basis = "AREA"
-    elif isinstance(cwt_cost, (int, float)) and isinstance(area_cost, (int, float)):
-        pricing_basis = "CWT + AREA"
     else:
         pricing_basis = "Not Applicable"
 
@@ -239,9 +313,9 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
 
     return {
         "commodity_group": commodity_group,
-        "freight_class_lbs": freight_class,
-        "lbs": round(lbs, 2),
-        "cwt_quantity": round(cwt_quantity, 2),
+        "freight_class_lbs": safe(freight_class),  # freight_class,
+        "lbs": safe(round(lbs, 2)) if isinstance(lbs, (int, float)) else 0,
+        "cwt_quantity": safe(round(cwt_quantity, 2)) if isinstance(cwt_quantity, (int, float)) else 0,
         "weight_uom": "lbs",
         "rate_cwt": safe(cwt_rate, 0),
         "discount_cwt": safe(cwt_discount, 0),

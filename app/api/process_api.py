@@ -12,9 +12,9 @@ import json
 import requests
 from datetime import datetime
 
-from utils.reporting_analysis_utils import (prepare_input_data, prepare_output_data,
-                                            classify_load, cost_uom_format,
-                                            analyze_freight_outliers)
+from utils.archive.reporting_analysis_utils_adjusted import (prepare_input_data, prepare_output_data,
+                                                             classify_load, cost_uom_format,
+                                                             analyze_freight_outliers)
 router = APIRouter()
 
 
@@ -38,6 +38,7 @@ async def generate_freight_report(file1: UploadFile = File(...), file2: UploadFi
         actual_df = read_upload(file2)
 
         actual_summary = prepare_output_data(estimated_df)
+
         estimated_summary = prepare_input_data(actual_df)
         merged = estimated_summary.merge(
             actual_summary, on=["site", "invoice_id"], how="outer")

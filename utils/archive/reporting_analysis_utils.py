@@ -96,7 +96,7 @@ def classify_shipment(row):
     qty = row['total_quantity']
 
     if uom == 'LBS':
-        return 'FTL' if qty >= 15000 else 'LTL'
+        return 'FTL' if qty > 19999 else 'LTL'
     elif uom == 'SQYD':
         rolls = qty / 100
         return 'FTL' if rolls >= 45 else 'LTL'
