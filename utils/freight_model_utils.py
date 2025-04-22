@@ -89,11 +89,6 @@ minimum_charges = {
 # === Loaders ===
 
 
-# === Adjustable Rate Reduction Factors ===
-MARKET_RATE_DISCOUNT = 0.30  # 30% off market freight price
-XGS_RATE_DISCOUNT = 0.06     # 6% off XGS rates from the freight table
-
-
 def load_rate_table_from_csv(filepath: str) -> Dict:
     df = pd.read_csv(filepath)
     df.columns = [col.strip().lower() for col in df.columns]

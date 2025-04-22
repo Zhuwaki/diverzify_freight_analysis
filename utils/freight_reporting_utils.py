@@ -3,8 +3,6 @@
 import pandas as pd
 
 
-
-
 def prepare_model_data(df):
     # --- Clean numeric fields that may contain errors or text ---
     df['est_estimated_area_cost'] = pd.to_numeric(
@@ -66,10 +64,8 @@ def cost_uom_format(df):
         lambda x: 'LBS' if '1VNL' in x else ('SQYD' if '1CBL' in x else None)
     )
 
-
     df['freight_ratio'] = (
         df['adjusted_freight_price'] / df['total_cost']).round(2)
-
 
     df['market_rate'] = (df['adjusted_freight_price'] /
                          df['total_quantity']).round(2)
@@ -110,8 +106,8 @@ def classify_shipment(row):
     if uom == 'LBS':
         return 'FTL' if qty > 19999 else 'LTL'
     elif uom == 'SQYD':
-        rolls = qty / 100
-        return 'FTL' if rolls >= 45 else 'LTL'
+        # rolls = qty / 100
+        return 'FTL' if qty > 2200 else 'LTL'
     else:
         return 'Unknown'  # fallback for unexpected units
 
