@@ -5,7 +5,7 @@ import io
 import os
 import logging
 from datetime import datetime
-from utils.freight_model_utils import estimate_dual_freight_cost, conversion_lookup
+from utils.freight_model_utils import estimate_dual_freight_cost, conversion_lookup, apply_market_freight_discount
 
 router = APIRouter()
 
@@ -63,6 +63,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         results = df.apply(safe_dual, axis=1)
         results.columns = [f"est_{col}" for col in results.columns]
         final_df = pd.concat([df, results], axis=1)
+        final_df = apply_market_freight_discount(final_df)
 
         os.makedirs("data/downloads", exist_ok=True)
         filename = f"freight_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"

@@ -12,6 +12,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 # Get just the date component as a datetime object
 date = datetime.now().strftime("%Y%m%d")
 
+APPLY_MARKET_DISCOUNT = True  # Set to True to apply the discount
 # === Configurable discount factor for market comparison ===
 MARKET_RATE_DISCOUNT = 0.30  # 30% reduction
 
@@ -279,23 +280,6 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
     df['freight_per_invoice'] = df['freight_per_invoice'].fillna(0)
     logging.info("✅ Completed adding freight to invoice.")
 
-    return df
-
-
-def apply_market_freight_discount(df: pd.DataFrame, column="freight_per_invoice") -> pd.DataFrame:
-    """
-    Adds a new column with the adjusted market freight rate.
-
-    Parameters:
-    - df: input DataFrame
-    - column: name of column containing original freight values
-
-    Returns:
-    - DataFrame with new column 'adjusted_freight_price'
-    """
-    logging.info(
-        f"✅ Applying market freight discount of {MARKET_RATE_DISCOUNT*100:.0f}% to '{column}'...")
-    df['adjusted_freight_price'] = df[column] * (1 - MARKET_RATE_DISCOUNT)
     return df
 
 
