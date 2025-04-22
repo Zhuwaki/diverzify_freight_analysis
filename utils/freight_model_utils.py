@@ -5,8 +5,10 @@ from typing import Optional, Tuple, Dict
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
-APPLY_XGS_DISCOUNT = False     # Toggle 6% discount from XGS rates (model)
-APPLY_MARKET_DISCOUNT = False  # Toggle 30% discount from freight_price
+
+APPLY_XGS_DISCOUNT = True     # Toggle 6% discount from XGS rates (model)
+APPLY_MARKET_DISCOUNT = True  # Toggle 30% discount from freight_price
+APPLY_MINIMUM_CHARGES = True  # Toggle minimum charges (model)
 
 # === Adjustable Discount Rates ===
 XGS_RATE_DISCOUNT = 0.06
@@ -123,7 +125,7 @@ def load_rate_table_from_csv(filepath: str) -> Dict:
                 if pd.notna(rate):
                     rate_table[site][unit][commodity][col.upper()] = (
                         float(
-                            rate) * (1 - XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
+                            rate) / (1 + XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
                     )
 
             except ValueError:
@@ -131,7 +133,10 @@ def load_rate_table_from_csv(filepath: str) -> Dict:
                     f"⚠️ Skipped non-numeric rate '{rate}' in column '{col}' for {site}/{unit}/{commodity}")
 
     logging.info("✅ Rate table loaded successfully.")
+    print(rate_table)
     return rate_table
+
+# This is a lookup table for conversion codes to commodity groups and units of measure
 
 
 def load_conversion_table(filepath: str) -> Dict:
@@ -178,6 +183,7 @@ def convert_area_to_weight(quantity: float, conversion_code: str):
     entry = conversion_lookup[code]
     normalized_uom = normalize_uom(entry["uom"])
     lbs = quantity * entry["lbs_per_uom"]
+    # (lbs, uom, commodity_group) tuple
     return lbs, normalized_uom, entry["commodity_group"]
 
 
@@ -206,7 +212,7 @@ def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, u
     if uom == "SQFT":
         quantity = sqft_to_sqyd(quantity)
         uom = "SQYD"
-        # NEW RULE: Never calculate area for 1VNL
+
     if commodity_group.upper() == "1VNL":
         return "Not applicable", None, None, None
 
@@ -215,23 +221,7 @@ def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, u
             f"ℹ️ Area pricing not available for {site} / {uom} / {commodity_group}")
         return "Not applicable", None, None, None
 
-    try:
-        freight_class = get_priority_class(quantity)
-    except Exception as e:
-        return f"Freight class error: {e}", None, None, None
-
-    rate = rates[site][uom][commodity_group].get(freight_class)
-    if rate is None:
-        return "Missing class column", freight_class, None, None
-
-    discount = discounts.get(uom, {}).get(site, 1)
-    raw_cost = round(rate * discount * quantity, 2)
-    # 👇 Fetch minimum charge by site and commodity group
-    min_charge = minimum_charges.get(
-        site, {}).get(commodity_group, 0)
-    cost = round(max(raw_cost, min_charge), 2)
-
-    return cost, freight_class, rate, discount
+    return calculate_freight_cost(quantity, site, uom, commodity_group, apply_minimum=APPLY_MINIMUM_CHARGES)
 
 
 def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str) -> Dict:
@@ -259,10 +249,10 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
             cwt_discount = None
             cwt_min_applied = False
         else:
-            cwt_discount = discounts.get("CWT", {}).get(site, 1)
-            raw_cost = cwt_rate * cwt_discount * cwt_quantity
-            cwt_cost = round(max(raw_cost, min_charge), 2)
-            cwt_min_applied = raw_cost < min_charge
+            cwt_cost, freight_class, cwt_rate, cwt_discount, cwt_min_applied = calculate_freight_cost(
+                cwt_quantity, site, "CWT", commodity_group, apply_minimum=APPLY_MINIMUM_CHARGES
+            )
+
     else:
         cwt_cost = "Not applicable"
         cwt_rate = None
@@ -282,8 +272,16 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
 
     if isinstance(area_cost, (int, float)):
         raw_area_cost = area_cost
-        area_min_applied = raw_area_cost < min_charge
-        area_cost = round(max(raw_area_cost, min_charge), 2)  # ← Apply minimum
+        if APPLY_MINIMUM_CHARGES:
+            # Apply minimum charge if applicable
+            # Check if the raw area cost is less than the minimum charge
+            area_min_applied = raw_area_cost < min_charge
+            area_cost = round(max(raw_area_cost, min_charge),
+                              2)  # ← Apply minimum
+        else:
+            area_min_applied = False
+            area_cost = round(raw_area_cost, 2)
+
     else:
         area_min_applied = False
 
@@ -347,6 +345,30 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
         "est_min_rule_applied": bool(min_rule_applied),  # NEW,
         'sqyd': est_sqyd,  # NEW
     }
+
+
+def calculate_freight_cost(quantity: float, site: str, unit: str, commodity_group: str, apply_minimum: bool = True):
+    try:
+        freight_class = get_priority_class(quantity)
+    except Exception as e:
+        return f"Freight class error: {e}", None, None, None, None
+
+    rate, error = get_freight_rate(site, unit, commodity_group, freight_class)
+    if error:
+        return error, freight_class, None, None, None
+
+    discount = discounts.get(unit, {}).get(site, 1)
+    raw_cost = rate * discount * quantity
+    min_charge = minimum_charges.get(site, {}).get(commodity_group, 0)
+
+    if apply_minimum:
+        cost = round(max(raw_cost, min_charge), 2)
+        min_applied = raw_cost < min_charge
+    else:
+        cost = round(raw_cost, 2)
+        min_applied = False
+
+    return cost, freight_class, rate, discount, min_applied
 
 
 def apply_market_freight_discount(df: pd.DataFrame, column="freight_per_invoice") -> pd.DataFrame:

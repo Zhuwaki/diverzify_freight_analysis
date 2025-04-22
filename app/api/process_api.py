@@ -12,9 +12,9 @@ import json
 import requests
 from datetime import datetime
 
-from utils.freight_reporting_utils import (prepare_market_freight_data, prepare_model_data,
-                                           classify_load, cost_uom_format,
-                                           analyze_freight_outliers)
+from utils.model_reporting_utils import (prepare_market_freight_data, prepare_model_data,
+                                         classify_load, cost_uom_format,
+                                         analyze_freight_outliers)
 router = APIRouter()
 
 
