@@ -9,7 +9,7 @@ XGS_RATE_DISCOUNT = 0.06
 MARKET_RATE_DISCOUNT = 0.30
 
 
-def prepare_output_data(df):
+def prepare_model_data(df):
     # --- Clean numeric fields that may contain errors or text ---
     df['est_estimated_area_cost'] = pd.to_numeric(
         df['est_estimated_area_cost'].astype(
@@ -40,8 +40,8 @@ def prepare_output_data(df):
     return df_output_freight
 
 
-def prepare_input_data(df):
-    # Get the unique commodity descriptions for each invoice_id amd the freight price from the modelled input
+def prepare_market_freight_data(df):
+    # Get the unique commodity descriptions for each invoice_id and the freight price from the modelled input
     model_input_freight = df.groupby(['site', 'invoice_id']).agg(
         adjusted_freight_price=('adjusted_freight_price', 'first'),
         unique_commodity_group_input=(
@@ -69,14 +69,15 @@ def cost_uom_format(df):
     df['UOM'] = df['unique_commodity_group_input'].apply(
         lambda x: 'LBS' if '1VNL' in x else ('SQYD' if '1CBL' in x else None)
     )
-    df['adjusted_freight_price'] = df['freight_price'] * \
-        (1 -
-         MARKET_RATE_DISCOUNT) if APPLY_MARKET_DISCOUNT else df['freight_price']
+
     df['freight_ratio'] = (
         df['adjusted_freight_price'] / df['total_cost']).round(2)
+
     df['market_rate'] = (df['adjusted_freight_price'] /
                          df['total_quantity']).round(2)
+
     df['xgs_rate'] = (df['total_cost'] / df['total_quantity']).round(2)
+
     df['rate_ratio'] = (df['market_rate'] / df['xgs_rate']).round(2)
     return df
 
