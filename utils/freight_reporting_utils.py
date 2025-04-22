@@ -1,8 +1,8 @@
 
 # === Global Toggles ===
 import pandas as pd
-APPLY_XGS_DISCOUNT = True     # Toggle 6% discount from XGS rates
-APPLY_MARKET_DISCOUNT = True  # Toggle 30% discount from freight_price
+APPLY_XGS_DISCOUNT = False     # Toggle 6% discount from XGS rates
+APPLY_MARKET_DISCOUNT = False  # Toggle 30% discount from freight_price (reporting )
 
 # === Adjustable Discount Rates ===
 XGS_RATE_DISCOUNT = 0.06
@@ -69,11 +69,8 @@ def cost_uom_format(df):
     df['UOM'] = df['unique_commodity_group_input'].apply(
         lambda x: 'LBS' if '1VNL' in x else ('SQYD' if '1CBL' in x else None)
     )
-    df['adjusted_freight_price'] = df['freight_price'] * \
-        (1 -
-         MARKET_RATE_DISCOUNT) if APPLY_MARKET_DISCOUNT else df['freight_price']
-    df['freight_ratio'] = (
-        df['adjusted_freight_price'] / df['total_cost']).round(2)
+    df['adjusted_freight_price'] = df['freight_price'] * (1 -MARKET_RATE_DISCOUNT) if APPLY_MARKET_DISCOUNT else df['freight_price']
+    df['freight_ratio'] = (df['adjusted_freight_price'] / df['total_cost']).round(2)
     df['market_rate'] = (df['adjusted_freight_price'] /
                          df['total_quantity']).round(2)
     df['xgs_rate'] = (df['total_cost'] / df['total_quantity']).round(2)
