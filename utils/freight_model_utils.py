@@ -1,15 +1,16 @@
-import logging
-from typing import Optional, Tuple, Dict
-import pandas as pd
 
 # === Global Toggles ===
-APPLY_XGS_DISCOUNT = True     # Toggle 6% discount from XGS rates
-APPLY_MARKET_DISCOUNT = True     # Toggle to apply market freight discount
-
+import logging
+from typing import Optional, Tuple, Dict
+from datetime import datetime
+import matplotlib.pyplot as plt
+import pandas as pd
+APPLY_XGS_DISCOUNT = False     # Toggle 6% discount from XGS rates (model)
+APPLY_MARKET_DISCOUNT = False  # Toggle 30% discount from freight_price
 
 # === Adjustable Discount Rates ===
 XGS_RATE_DISCOUNT = 0.06
-MARKET_RATE_DISCOUNT = 0.30      # Default to 30% discount
+MARKET_RATE_DISCOUNT = 0.30
 
 
 logging.basicConfig(level=logging.INFO)
@@ -44,7 +45,7 @@ minimum_charges = {
         '1VNL': 0,
         '1CPT': 0
     },
-    "SPJ": {
+    "SPJ": {s
         '1CBL': 0,
         '1VNL': 0,
         '1CPT': 0
@@ -89,6 +90,7 @@ minimum_charges = {
 
 
 # === Adjustable Rate Reduction Factors ===
+MARKET_RATE_DISCOUNT = 0.30  # 30% off market freight price
 XGS_RATE_DISCOUNT = 0.06     # 6% off XGS rates from the freight table
 
 
@@ -125,8 +127,7 @@ def load_rate_table_from_csv(filepath: str) -> Dict:
             try:
                 if pd.notna(rate):
                     rate_table[site][unit][commodity][col.upper()] = (
-                        float(
-                            rate) * (1 - XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
+                        float(rate) * (1 - XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
                     )
 
             except ValueError:
@@ -350,21 +351,3 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
         "est_min_rule_applied": bool(min_rule_applied),  # NEW,
         'sqyd': est_sqyd,  # NEW
     }
-
-
-def apply_market_freight_discount(df: pd.DataFrame, column: str = "freight_per_invoice") -> pd.DataFrame:
-    """
-    Adds a new column with the adjusted market freight rate.
-
-    Parameters:
-    - df: input DataFrame
-    - column: name of column containing original freight values
-
-    Returns:
-    - DataFrame with new column 'adjusted_freight_price'
-    """
-    logging.info(
-        f"✅ Applying market freight discount of {MARKET_RATE_DISCOUNT * 100:.0f}% to '{column}'...")
-    df['adjusted_freight_price'] = df[column] * \
-        (1 - MARKET_RATE_DISCOUNT) if APPLY_MARKET_DISCOUNT else df[column]
-    return df
