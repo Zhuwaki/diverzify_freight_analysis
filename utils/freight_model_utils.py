@@ -127,7 +127,8 @@ def load_rate_table_from_csv(filepath: str) -> Dict:
             try:
                 if pd.notna(rate):
                     rate_table[site][unit][commodity][col.upper()] = (
-                        float(rate) * (1 - XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
+                        float(
+                            rate) * (1 - XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
                     )
 
             except ValueError:
@@ -351,3 +352,20 @@ def estimate_dual_freight_cost(quantity: float, conversion_code: str, site: str)
         "est_min_rule_applied": bool(min_rule_applied),  # NEW,
         'sqyd': est_sqyd,  # NEW
     }
+
+
+def apply_market_freight_discount(df: pd.DataFrame, column="freight_per_invoice") -> pd.DataFrame:
+    """
+    Adds a new column with the adjusted market freight rate.
+
+    Parameters:
+    - df: input DataFrame
+    - column: name of column containing original freight values
+
+    Returns:
+    - DataFrame with new column 'adjusted_freight_price'
+    """
+    logging.info(
+        f"✅ Applying market freight discount of {MARKET_RATE_DISCOUNT*100:.0f}% to '{column}'...")
+    df['adjusted_freight_price'] = df[column] * (1 - MARKET_RATE_DISCOUNT)
+    return df

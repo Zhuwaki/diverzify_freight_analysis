@@ -12,14 +12,14 @@ import json
 import requests
 from datetime import datetime
 
-from utils.archive.reporting_analysis_utils_adjusted import (prepare_input_data, prepare_output_data,
-                                                             classify_load, cost_uom_format,
-                                                             analyze_freight_outliers)
+from utils.freight_reporting_utils import (prepare_market_freight_data, prepare_model_data,
+                                           classify_load, cost_uom_format,
+                                           analyze_freight_outliers)
 router = APIRouter()
 
 
 @router.post("/report")
-async def generate_freight_report(file1: UploadFile = File(...), file2: UploadFile = File(...)):
+async def generate_freight_report(file1: UploadFile = File(...)):
     try:
         def read_upload(upload: UploadFile) -> pd.DataFrame:
             contents = upload.file.read()
@@ -35,14 +35,18 @@ async def generate_freight_report(file1: UploadFile = File(...), file2: UploadFi
                 raise ValueError("Unsupported file format")
 
         estimated_df = read_upload(file1)
-        actual_df = read_upload(file2)
 
-        actual_summary = prepare_output_data(estimated_df)
+        actual_summary = prepare_market_freight_data(estimated_df)
 
-        estimated_summary = prepare_input_data(actual_df)
+        estimated_summary = prepare_model_data(estimated_df)
+
         merged = estimated_summary.merge(
             actual_summary, on=["site", "invoice_id"], how="outer")
+
+        print(merged.head(5))
+
         merged = cost_uom_format(merged)
+
         merged = classify_load(merged)
         merged = analyze_freight_outliers(merged)
 
