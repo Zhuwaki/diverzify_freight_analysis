@@ -45,7 +45,7 @@ minimum_charges = {
         '1VNL': 0,
         '1CPT': 0
     },
-    "SPJ": {s
+    "SPJ": {
         '1CBL': 0,
         '1VNL': 0,
         '1CPT': 0
