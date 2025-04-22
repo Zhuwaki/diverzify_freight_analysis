@@ -1,12 +1,8 @@
 
 # === Global Toggles ===
 import pandas as pd
-APPLY_XGS_DISCOUNT = False     # Toggle 6% discount from XGS rates
-APPLY_MARKET_DISCOUNT = False  # Toggle 30% discount from freight_price (reporting )
 
-# === Adjustable Discount Rates ===
-XGS_RATE_DISCOUNT = 0.06
-MARKET_RATE_DISCOUNT = 0.30
+
 
 
 def prepare_model_data(df):
