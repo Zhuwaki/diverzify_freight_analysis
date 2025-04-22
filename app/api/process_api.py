@@ -45,10 +45,10 @@ async def generate_freight_report(file1: UploadFile = File(...)):
 
         print(merged.head(5))
 
-        merged = cost_uom_format(merged)
+      #  merged = cost_uom_format(merged)
 
-        merged = classify_load(merged)
-        merged = analyze_freight_outliers(merged)
+       # merged = classify_load(merged)
+        # merged = analyze_freight_outliers(merged)
 
         os.makedirs("data/downloads", exist_ok=True)
         filename = f"freight_comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"

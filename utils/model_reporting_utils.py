@@ -5,29 +5,27 @@ import pandas as pd
 
 def prepare_model_data(df):
     # --- Clean numeric fields that may contain errors or text ---
-    df['est_estimated_area_cost'] = pd.to_numeric(
-        df['est_estimated_area_cost'].astype(
-            str).str.extract(r'([-]?[0-9]*\.?[0-9]+)')[0],
-        errors='coerce'
-    )
-
-    df['est_estimated_cwt_cost'] = pd.to_numeric(
-        df['est_estimated_cwt_cost'].astype(
+    df['est_estimated_cost'] = pd.to_numeric(
+        df['est_estimated_cost'].astype(
             str).str.extract(r'([-]?[0-9]*\.?[0-9]+)')[0],
         errors='coerce'
     )
 
     # --- Group by invoice_id and aggregate ---
     df_output_freight = df.groupby(['site', 'invoice_id']).agg(
-        # total_quantity=('quantity', 'sum'),
-        total_estimated_area_cost=('est_estimated_area_cost', 'sum'),
-        total_estimated_cwt_cost=('est_estimated_cwt_cost', 'sum'),
-        total_est_lbs=('est_lbs', 'sum'),
-        total_est_sqyd=('est_sqyd', 'sum'),
+        total_quantity=('est_standard_quantity', 'sum'),
+        uom_quantity=('est_standard_uom', 'first'),
+        xgs_real_rate=('est_rate', lambda x: x.dropna().mean()),
+        total_estimated_cost=('est_estimated_cost', 'sum'),
+        market_rate=('market_estimated_rate', 'first'),
+        total_market_cost=('adjusted_freight_price', 'first'),
+
+        shipment=('est_shipment_type', 'first'),
+
         unique_commodity_group_output=(
             'est_commodity_group', lambda x: x.dropna().unique().tolist()),
-        unique_commodity_description_output=(
-            'new_commodity_description', lambda x: x.dropna().unique().tolist())
+
+
     ).reset_index()
 
     # View results

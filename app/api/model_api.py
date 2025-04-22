@@ -5,7 +5,7 @@ import io
 import os
 import logging
 from datetime import datetime
-from utils.freight_model_utils import estimate_dual_freight_cost, conversion_lookup, apply_market_freight_discount
+from utils.freight_model_utils import estimate_freight_cost, conversion_lookup, apply_market_freight_discount, enrich_invoice_level_rates
 
 router = APIRouter()
 
@@ -36,10 +36,13 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
 
         def safe_dual(row):
             try:
-                return pd.Series(estimate_dual_freight_cost(
+                return pd.Series(estimate_freight_cost(
                     quantity=row["invoiced_line_qty"],
                     conversion_code=row["conversion_code"],
-                    site=row["site"]
+                    site=row["site"],
+                    inv_uom=row['inv_uom'],
+                    commodity_group=row['new_commodity_group'],
+
                 ))
             except Exception as e:
                 return pd.Series({
@@ -64,6 +67,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         results.columns = [f"est_{col}" for col in results.columns]
         final_df = pd.concat([df, results], axis=1)
         final_df = apply_market_freight_discount(final_df)
+        final_df = enrich_invoice_level_rates(final_df)
 
         os.makedirs("data/downloads", exist_ok=True)
         filename = f"freight_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
