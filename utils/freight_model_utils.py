@@ -367,5 +367,5 @@ def apply_market_freight_discount(df: pd.DataFrame, column="freight_per_invoice"
     """
     logging.info(
         f"✅ Applying market freight discount of {MARKET_RATE_DISCOUNT*100:.0f}% to '{column}'...")
-    df['adjusted_freight_price'] = df[column] * (1 - MARKET_RATE_DISCOUNT)
+    df['adjusted_freight_price'] = df[column] / (1 + MARKET_RATE_DISCOUNT)
     return df
