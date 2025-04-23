@@ -462,3 +462,40 @@ def flag_market_cost_outliers(df: pd.DataFrame) -> pd.DataFrame:
             "HIGH" if x > upper_bound else "NORMAL")
     )
     return df
+
+
+def compute_freight_and_rate_ratios(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds freight and rate ratio calculations to the DataFrame.
+    - freight_ratio_raw = est_market_freight_costs / est_xgs_total_raw_cost
+    - freight_ratio_normal = est_market_freight_costs / est_xgs_total_normalised_cost
+    - rate_ratio_raw = est_market_rate / est_xgs_rate
+    - rate_ratio_normal = est_market_rate / est_normalised_xgs_rate
+    """
+    df["freight_ratio_raw"] = df.apply(
+        lambda row: row["est_market_freight_costs"] /
+        row["est_xgs_total_raw_cost"]
+        if pd.notnull(row["est_market_freight_costs"]) and pd.notnull(row["est_xgs_total_raw_cost"]) and row["est_xgs_total_raw_cost"] != 0 else None,
+        axis=1
+    )
+
+    df["freight_ratio_normal"] = df.apply(
+        lambda row: row["est_market_freight_costs"] /
+        row["est_xgs_total_normalised_cost"]
+        if pd.notnull(row["est_market_freight_costs"]) and pd.notnull(row["est_xgs_total_normalised_cost"]) and row["est_xgs_total_normalised_cost"] != 0 else None,
+        axis=1
+    )
+
+    df["rate_ratio_raw"] = df.apply(
+        lambda row: row["est_market_rate"] / row["est_xgs_rate"]
+        if pd.notnull(row["est_market_rate"]) and pd.notnull(row["est_xgs_rate"]) and row["est_xgs_rate"] != 0 else None,
+        axis=1
+    )
+
+    df["rate_ratio_normal"] = df.apply(
+        lambda row: row["est_market_rate"] / row["est_normalised_xgs_rate"]
+        if pd.notnull(row["est_market_rate"]) and pd.notnull(row["est_normalised_xgs_rate"]) and row["est_normalised_xgs_rate"] != 0 else None,
+        axis=1
+    )
+
+    return df

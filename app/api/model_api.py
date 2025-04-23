@@ -14,7 +14,8 @@ from utils.freight_model_utils import (
     compute_xgs_invoice_costs,
     conversion_lookup,
     freight_model_output,
-    flag_market_cost_outliers
+    flag_market_cost_outliers,
+    compute_freight_and_rate_ratios
 
 )
 
@@ -74,6 +75,7 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
         final_df = compute_xgs_invoice_costs(final_df)
         final_df = flag_market_cost_outliers(final_df)
         final_df = freight_model_output(final_df)
+        final_df = compute_freight_and_rate_ratios(final_df)
 
         os.makedirs("data/downloads", exist_ok=True)
         filename = f"freight_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
