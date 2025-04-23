@@ -293,7 +293,9 @@ def filter_valid_invoices(mapped_df):
         (mapped_df['all_2008_accounts_converted'] == True) &
         (mapped_df['all__invoice_priority_products_(2008)'] == True) &
         (mapped_df['has_freight_line'] == True) &
-        (mapped_df['site'].isin(site_list))
+        (mapped_df['site'].isin(site_list)) &
+        (mapped_df['invoiced_line_qty'] > 0) &
+        (mapped_df['freight_per_invoice'] > 0)
     ]
     filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
 
