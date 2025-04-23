@@ -5,7 +5,18 @@ import io
 import os
 import logging
 from datetime import datetime
-from utils.freight_model_utils import estimate_freight_cost, conversion_lookup, apply_market_freight_discount, enrich_invoice_level_rates
+from utils.freight_model_utils import (
+    standardize_commodity,
+    compute_total_freight_quantity,
+    calibrate_surcharge,
+    compute_market_rates,
+    compute_invoice_freight_rate,
+    compute_xgs_invoice_costs,
+    conversion_lookup,
+    freight_model_output,
+    flag_market_cost_outliers
+
+)
 
 router = APIRouter()
 
@@ -36,38 +47,33 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
 
         def safe_dual(row):
             try:
-                return pd.Series(estimate_freight_cost(
+                return pd.Series(standardize_commodity(
                     quantity=row["invoiced_line_qty"],
                     conversion_code=row["conversion_code"],
                     site=row["site"],
                     inv_uom=row['inv_uom'],
                     commodity_group=row['new_commodity_group'],
-
                 ))
             except Exception as e:
                 return pd.Series({
-                    "estimated_cwt_cost": f"Error: {str(e)}",
-                    "freight_class_cwt": "",
-                    "rate_cwt": "",
-                    "discount_cwt": "",
-                    "estimated_area_cost": "",
-                    "freight_class_area": "",
-                    "rate_area": "",
-                    "discount_area": "",
                     "commodity_group": "",
-                    "uom": "",
-                    'est_pricing_basis': "",
-                    'est_cwt_min_applied': "",
-                    'est_area_min_applied': "",
-                    'est_min_rule_applied': "",
-                    'sqyd': "",
+                    "method_used": "",
+                    "standard_quantity": None,
+                    "standard_uom": "",
+                    "error": str(e)
                 })
 
         results = df.apply(safe_dual, axis=1)
         results.columns = [f"est_{col}" for col in results.columns]
         final_df = pd.concat([df, results], axis=1)
-        final_df = apply_market_freight_discount(final_df)
-        final_df = enrich_invoice_level_rates(final_df)
+
+        final_df = compute_total_freight_quantity(final_df)
+        final_df = calibrate_surcharge(final_df)
+        final_df = compute_market_rates(final_df)
+        final_df = compute_invoice_freight_rate(final_df)
+        final_df = compute_xgs_invoice_costs(final_df)
+        final_df = flag_market_cost_outliers(final_df)
+        final_df = freight_model_output(final_df)
 
         os.makedirs("data/downloads", exist_ok=True)
         filename = f"freight_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -80,5 +86,6 @@ async def estimate_dual_batch(file: UploadFile = File(...)):
             "preview": final_df.head(5).fillna("").to_dict(orient="records"),
             "download_url": f"/download/{filename}"
         })
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

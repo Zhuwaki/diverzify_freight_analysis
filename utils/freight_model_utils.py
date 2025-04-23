@@ -5,6 +5,7 @@ from typing import Optional, Tuple, Dict
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
+from utils.loaders import load_rate_table_from_csv, load_conversion_table
 
 APPLY_XGS_DISCOUNT = True     # Toggle 6% discount from XGS rates (model)
 APPLY_MARKET_DISCOUNT = True  # Toggle 30% discount from freight_price
@@ -12,7 +13,7 @@ APPLY_MINIMUM_CHARGES = True  # Toggle minimum charges (model)
 
 # === Adjustable Discount Rates ===
 XGS_RATE_DISCOUNT = 0.06
-MARKET_RATE_DISCOUNT = 0.30
+SURCHARGE_DISCOUNT = 0.30
 
 
 logging.basicConfig(level=logging.INFO)
@@ -91,71 +92,11 @@ minimum_charges = {
 # === Loaders ===
 
 
-def load_rate_table_from_csv(filepath: str) -> Dict:
-    df = pd.read_csv(filepath)
-    df.columns = [col.strip().lower() for col in df.columns]
-
-    # Define valid freight class columns from breakpoints
-    valid_class_cols = [c[0].lower() for c in class_breakpoints]
-
-    # Debug available columns
-    logging.info(f"📊 Columns in freight rate table: {df.columns.tolist()}")
-
-    required_cols = ["siteid", "unit", "commodity_group"]
-    for col in required_cols:
-        if col not in df.columns:
-            raise KeyError(f"Missing required column '{col}' in rate table.")
-
-    rate_table = {}
-
-    for _, row in df.iterrows():
-        site = row["siteid"].strip().upper()
-        unit = row["unit"].strip().upper()
-        commodity = str(row["commodity_group"]).strip().upper()
-
-        rate_table.setdefault(site, {}).setdefault(
-            unit, {}).setdefault(commodity, {})
-
-        for col in df.columns:
-            if col not in valid_class_cols:
-                continue  # Skip anything that's not a freight class
-
-            rate = row[col]
-            try:
-                if pd.notna(rate):
-                    rate_table[site][unit][commodity][col.upper()] = (
-                        float(
-                            rate) / (1 + XGS_RATE_DISCOUNT) if APPLY_XGS_DISCOUNT else float(rate)
-                    )
-
-            except ValueError:
-                logging.warning(
-                    f"⚠️ Skipped non-numeric rate '{rate}' in column '{col}' for {site}/{unit}/{commodity}")
-
-    logging.info("✅ Rate table loaded successfully.")
-    print(rate_table)
-    return rate_table
-
-# This is a lookup table for conversion codes to commodity groups and units of measure
-
-
-def load_conversion_table(filepath: str) -> Dict:
-    df = pd.read_csv(filepath)
-    df.columns = df.columns.str.strip().str.lower()
-    df["conversion_code"] = df["conversion_code"].str.strip().str.upper()
-    logging.info("✅ Conversion table loaded successfully.")
-    return {
-        row["conversion_code"]: {
-            "commodity_group": row["commodity_group"].strip().upper(),
-            "uom": row["uom"].strip().upper(),
-            "lbs_per_uom": row["lbs_per_uom"]
-        }
-        for _, row in df.iterrows()
-    }
-
-
 rates = load_rate_table_from_csv(RATES_CSV_PATH)
 conversion_lookup = load_conversion_table(CONVERSION_CSV_PATH)
+print("✅ Loaded commodity groups from conversion table:", set(
+    [v["commodity_group"] for v in conversion_lookup.values()]))
+
 
 # === Utility Functions ===
 
@@ -185,12 +126,18 @@ def normalize_uom(uom: str) -> str:
 def convert_area_to_weight(quantity: float, conversion_code: str):
     code = conversion_code.strip().upper()
     if code not in conversion_lookup:
-        raise ValueError(f"Conversion code '{conversion_code}' not found.")
+        raise ValueError(
+            f"Conversion code '{conversion_code}' not found in lookup.")
+
     entry = conversion_lookup[code]
     normalized_uom = normalize_uom(entry["uom"])
-    lbs = quantity * entry["lbs_per_uom"]
-    # (lbs, uom, commodity_group) tuple
-    return lbs, normalized_uom, entry["commodity_group"]
+    lbs_per_uom = entry["lbs_per_uom"]
+    commodity_group = entry["commodity_group"]
+    uom_used = entry["uom"]
+
+    lbs = quantity * lbs_per_uom
+
+    return lbs, normalized_uom, commodity_group, lbs_per_uom, uom_used
 
 
 def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: str) -> Tuple[Optional[float], Optional[str]]:
@@ -213,50 +160,32 @@ def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: 
         return None, f"Rate lookup error: {str(e)}"
 
 
-def estimate_area_based_cost(quantity: float, site: str, commodity_group: str, uom: str):
-    uom = normalize_uom(uom)
-    if uom == "SQFT":
-        quantity = sqft_to_sqyd(quantity)
-        uom = "SQYD"
+# Renamed and streamlined standardization function only
+# ✅ Updated: Ensure 1CBL/1CPT rows using AREA method are processed without conversion lookup requirement
 
-    if commodity_group.upper() == "1VNL":
-        return "Not applicable", None, None, None
-
-    if site not in rates or uom not in rates[site] or commodity_group not in rates[site][uom]:
-        logging.info(
-            f"ℹ️ Area pricing not available for {site} / {uom} / {commodity_group}")
-        return "Not applicable", None, None, None
-
-    return calculate_freight_cost(quantity, site, uom, commodity_group, apply_minimum=APPLY_MINIMUM_CHARGES)
-
-
-def estimate_freight_cost(
+def standardize_commodity(
     quantity: float,
     inv_uom: str,
     commodity_group: str,
     conversion_code: str,
     site: str
 ) -> Dict:
-    """
-    Standardized freight estimation function with clear unit context:
-    - Identifies method (CWT or AREA)
-    - Normalizes quantity
-    - Classifies freight class
-    - Fetches rate and applies discount
-    - Applies minimum charge logic
-    - Returns rate unit meaning for interpretation
-    """
+    print(f"🧪 Estimating standardized quantity only...")
+
+    def normalize_uom(uom: str) -> str:
+        uom = uom.strip().upper()
+        return "SQFT" if uom == "SF" else "SQYD" if uom == "SY" else uom
+
+    def sqft_to_sqyd(sqft: float) -> float:
+        return sqft / 9
 
     site = site.upper()
     group = commodity_group.upper()
     uom = normalize_uom(inv_uom)
 
-    # 1. Determine method and default rate unit
     method = "CWT" if group == "1VNL" else "AREA" if group in [
         "1CBL", "1CPT"] else "N/A"
-    rate_unit = "$/100 lbs" if method == "CWT" else "$/SQYD" if method == "AREA" else "N/A"
 
-    # 2. Normalize quantity
     if method == "AREA":
         if uom == "SQFT":
             std_qty = sqft_to_sqyd(quantity)
@@ -266,79 +195,80 @@ def estimate_freight_cost(
             std_uom = "SQYD"
         else:
             return {"error": f"Unsupported UOM '{uom}' for AREA-based group"}
+
+        return {
+            "commodity_group": group,
+            "method_used": method,
+            "standard_quantity": round(std_qty, 2),
+            "standard_uom": std_uom,
+            "lbs_per_uom": None  # not applicable for AREA
+        }
+
     elif method == "CWT":
-        if uom == "SQFT":
-            sqyd = sqft_to_sqyd(quantity)
-        elif uom == "SQYD":
-            sqyd = quantity
-        else:
-            return {"error": f"Unsupported UOM '{uom}' for CWT-based group"}
         try:
-            lbs, _, _ = convert_area_to_weight(sqyd, conversion_code)
+            lbs, input_uom, group, lbs_per_uom, uom_used = convert_area_to_weight(
+                quantity, conversion_code)
         except Exception as e:
             return {"error": f"Conversion failed: {e}"}
-        std_qty = lbs
-        std_uom = "LBS"
+
+        return {
+            "commodity_group": group,
+            "method_used": method,
+            "standard_quantity": round(lbs, 2),
+            "standard_uom": "LBS",
+            "lbs_per_uom": lbs_per_uom
+        }
+
     else:
         return {"error": f"Unsupported commodity group '{group}'"}
 
-    # 3. Classify freight class
-    try:
-        freight_class = get_priority_class(std_qty)
-    except Exception as e:
-        freight_class = None
-        rate = None
-        estimated_cost = f"Freight class error: {e}"
-        min_applied = False
-    else:
-        rate_unit_key = "CWT" if method == "CWT" else "SQYD" if method == "AREA" else None
-        rate, error = get_freight_rate(
-            site, rate_unit_key, group, freight_class)
 
-        if error:
-            estimated_cost = error
-            rate = None
-            discount = None
-            min_applied = False
-        else:
-            discount = discounts.get(std_uom, {}).get(site, 1)
-            # Adjust rate unit: divide by 100 for CWT
-            if method == "CWT":
-                normalized_rate = rate / 100
-            else:
-                normalized_rate = rate
-
-            raw_cost = normalized_rate * discount * std_qty
-
-            min_charge = minimum_charges.get(site, {}).get(group, 0)
-            rounded_raw_cost = round(raw_cost, 2)
-            if APPLY_MINIMUM_CHARGES:
-                estimated_cost = max(rounded_raw_cost, min_charge)
-                min_applied = rounded_raw_cost < min_charge
-            else:
-                estimated_cost = rounded_raw_cost
-                min_applied = False
-
-    # 4. Classify as FTL or LTL
-    shipment_type = classify_shipment_by_uom(std_qty, std_uom)
-
-    return {
-        "commodity_group": group,
-        "method_used": method,
-        "standard_quantity": round(std_qty, 2),
-        "standard_uom": std_uom,
-        "freight_class": freight_class,
-        "rate": round(normalized_rate, 4),
-        "rate_unit": "$/lb" if method == "CWT" else "$/SQYD",
-        "discount": discount if rate else None,
-        "raw_cost": rounded_raw_cost,
-        "estimated_cost": estimated_cost,
-        "min_applied": min_applied,
-        "shipment_type": shipment_type
-    }
+# Step 2: Compute total_quantity at invoice level
 
 
-def enrich_invoice_level_rates(df: pd.DataFrame) -> pd.DataFrame:
+def calibrate_surcharge(df: pd.DataFrame, column="freight_per_invoice") -> pd.DataFrame:
+    print(f"🧪 Adjusting for surcharge")
+    """
+    Adds a new column with the adjusted market freight rate.
+
+    Parameters:
+    - df: input DataFrame
+    - column: name of column containing original freight values
+
+    Returns:
+    - DataFrame with new column 'adjusted_freight_price'
+    """
+    logging.info(
+        f"✅ Applying market freight discount of {SURCHARGE_DISCOUNT*100:.0f}% to '{column}'...")
+    df['est_market_freight_costs'] = df[column] / (1 + SURCHARGE_DISCOUNT)
+    return df
+
+
+def compute_total_freight_quantity(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Computes and appends a new column 'total_quantity' at invoice level,
+    summing standardized quantity across all rows per invoice.
+
+    Assumes:
+    - 'invoice_id' and 'standard_quantity' columns exist.
+
+    Returns:
+    - df with new column 'total_quantity'
+    """
+    if 'invoice_id' not in df.columns or 'est_standard_quantity' not in df.columns:
+        raise ValueError(
+            "Both 'invoice_id' and 'standard_quantity' must be present in the DataFrame")
+
+    invoice_totals = df.groupby(['invoice_id', 'est_standard_uom'])[
+        'est_standard_quantity'].sum().reset_index()
+    invoice_totals.rename(
+        columns={'est_standard_quantity': 'est_total_quantity'}, inplace=True)  # includes std_uom
+
+    return df.merge(invoice_totals, on=['invoice_id', 'est_standard_uom'], how='left')
+
+
+def compute_market_rates(df: pd.DataFrame) -> pd.DataFrame:
+    print(f"🧪 Estimating market rates")
     """
     Calculates invoice-level total standard quantity and estimated market rate.
     Adds a 'market_estimated_rate' column based on:
@@ -356,7 +286,7 @@ def enrich_invoice_level_rates(df: pd.DataFrame) -> pd.DataFrame:
 
     # Ensure required columns exist
     required_cols = ["invoice_id",
-                     "adjusted_freight_price", "est_standard_quantity"]
+                     "est_market_freight_costs", "est_total_quantity"]
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
@@ -366,259 +296,169 @@ def enrich_invoice_level_rates(df: pd.DataFrame) -> pd.DataFrame:
 
     # Group and calculate invoice-level totals
     invoice_summary = valid_df.groupby("invoice_id").agg(
-        total_standard_quantity=("est_standard_quantity", "sum"),
-        adjusted_freight_price=("adjusted_freight_price", "first")
+        est_total_quantity=("est_total_quantity", "first"),
+        est_market_freight_costs=("est_market_freight_costs", "first")
     ).reset_index()
 
     # Avoid divide-by-zero
-    invoice_summary["market_estimated_rate"] = np.where(
-        invoice_summary["total_standard_quantity"] > 0,
-        invoice_summary["adjusted_freight_price"] /
-        invoice_summary["total_standard_quantity"],
+    invoice_summary["est_market_rate"] = np.where(
+        invoice_summary["est_total_quantity"] > 0,
+        invoice_summary["est_market_freight_costs"] /
+        invoice_summary["est_total_quantity"],
         np.nan
     )
 
     # Merge back to main dataframe
     df = df.merge(invoice_summary[[
-                  "invoice_id", "market_estimated_rate"]], on="invoice_id", how="left")
+                  "invoice_id", "est_market_rate"]], on="invoice_id", how="left")
 
     return df
-
-
-def estimate_dual_freight_cost(quantity: float, inv_uom: str, commodity_group: str, conversion_code: str, site: str) -> Dict:
-
-    logging.info(f"📊 Calculating the dual freight costs")
-    site = site.upper()
-
-    # 🔍 Standardize and classify before estimation
-    analysis_uom, est_sqyd, lbs, shipment_type = standardize_quantity_and_classify(
-        commodity_group,
-        inv_uom,
-        quantity,
-        conversion_code
-    )
-
-    # 👇 Fetch min_charge by site and commodity_group
-    min_charge = minimum_charges.get(site, {}).get(commodity_group, 0)
-
-    # Calculate CWT cost if applicable - this is only applicable for 1VNL
-    if commodity_group == "1VNL":
-        cwt_quantity = lbs / 100
-
-        freight_class = get_priority_class(lbs)
-        cwt_rate, cwt_error = get_freight_rate(
-            site, "CWT", commodity_group, freight_class
-        )
-
-        if cwt_error:
-            cwt_cost = cwt_error
-            cwt_discount = None
-            cwt_min_applied = False
-        else:
-            cwt_cost, freight_class, cwt_rate, cwt_discount, cwt_min_applied, raw_cost = calculate_freight_cost(
-                cwt_quantity, site, "CWT", commodity_group, apply_minimum=APPLY_MINIMUM_CHARGES
-            )
-
-    else:
-        cwt_cost = "Not applicable"
-        cwt_rate = None
-        cwt_discount = None
-        cwt_quantity = None
-        freight_class = None
-        cwt_min_applied = False
-
-    # 1CPT and 1CBL are provided for by XGS
-    if commodity_group in ["1CPT", "1CBL"]:
-        area_cost, area_freight_class, area_rate, area_discount, area_min_applied, raw_area_cost = estimate_area_based_cost(
-            quantity, site, commodity_group, inv_uom
-        )
-
-    else:
-        area_cost, area_freight_class, area_rate, area_discount = "Not applicable", None, None, None
-        area_min_applied = False
-        raw_area_cost = None
-
-    if commodity_group == "1VNL":
-        pricing_basis = "CWT"
-    elif commodity_group in ["1CBL", "1CPT"]:
-        pricing_basis = "AREA"
-    else:
-        pricing_basis = "Not Applicable"
-
-    # Rule-based labeling for where minimum was applied
-    min_rule_applied = (
-        (commodity_group == "1VNL" and area_min_applied) or
-        (commodity_group == "1CBL" and cwt_min_applied)
-    )
-
-    raw_area_cost = None
-    if isinstance(area_cost, (int, float)):
-        raw_area_cost = area_cost
-        area_min_applied = raw_area_cost < min_charge
-        area_cost = round(max(raw_area_cost, min_charge), 2)
-    else:
-        area_min_applied = False
-
-    raw_cwt_cost = None
-    if not isinstance(cwt_cost, str):  # means it was calculated, not an error string
-        raw_cwt_cost = round(raw_cost, 2)
-
-    def safe(x, fallback="N/A"):
-        if pd.isna(x) or x in [float("inf"), float("-inf")]:
-            return fallback
-        return x
-
-    # 🔍 Determine shipment mode
-    # 🔍 Determine shipment mode based on true weight or area
-    if commodity_group == "1VNL":
-        shipment_uom = "LBS"
-        total_quantity = lbs  # ✅ Use the weight from convert_area_to_weight
-    elif commodity_group in ["1CBL", "1CPT"]:
-        shipment_uom = "SQYD"
-        total_quantity = est_sqyd
-    else:
-        shipment_uom = None
-        total_quantity = None
-
-    # ✅ Classify as FTL or LTL using correct UOM and quantity
-    shipment_type = classify_shipment_by_uom(total_quantity, shipment_uom)
-
-    if commodity_group == "1VNL":
-        xgs_real_rate = cwt_rate
-    elif commodity_group in ["1CBL", "1CPT"]:
-        xgs_real_rate = area_rate
-    else:
-        xgs_real_rate = None
-
-    return {
-        "commodity_group": commodity_group,
-        "freight_class_lbs": safe(freight_class),  # freight_class,
-        "lbs": safe(round(lbs, 2)) if isinstance(lbs, (int, float)) else 0,
-        "cwt_quantity": safe(round(cwt_quantity, 2)) if isinstance(cwt_quantity, (int, float)) else 0,
-        "weight_uom": "lbs",
-        "rate_cwt": safe(cwt_rate, 0),
-        "discount_cwt": safe(cwt_discount, 0),
-        "estimated_cwt_cost": safe(cwt_cost, 0),
-        "cwt_min_applied": bool(cwt_min_applied),
-        "original_quantity": quantity,
-        "original_uom": inv_uom,
-        "converted_sqyd": round(est_sqyd, 2),
-        "freight_class_area": safe(area_freight_class),
-        "rate_area": safe(area_rate, 0),
-        "discount_area": safe(area_discount, 0),
-        "estimated_area_cost": safe(area_cost, 0),
-        "area_min_applied": bool(area_min_applied),
-        "area_uom_used": "SQYD" if inv_uom in ["SQFT", "SQYD"] else "N/A",
-        "est_pricing_basis": pricing_basis,
-        "min_rule_applied": bool(min_rule_applied),
-        "raw_area_cost": safe(raw_area_cost, 0),
-        "raw_cwt_cost": safe(raw_cwt_cost, 0),
-        "freight_class_cwt": safe(freight_class),  # NEW
-        "analysis_uom": safe(analysis_uom),                 # NEW
-        "est_cwt_min_applied": bool(cwt_min_applied),  # NEW
-        "est_area_min_applied": bool(area_min_applied),  # NEW
-        "est_min_rule_applied": bool(min_rule_applied),  # NEW,
-        'sqyd': est_sqyd,  # NEW
-        'shipment_type': shipment_type,
-        'xgs_real_rate': safe(xgs_real_rate, 0),  # NEW
-    }
-
-
-def calculate_freight_cost(quantity: float, site: str, unit: str, commodity_group: str, apply_minimum: bool = True):
-    try:
-        freight_class = get_priority_class(quantity)
-    except Exception as e:
-        return f"Freight class error: {e}", None, None, None, None
-
-    rate, error = get_freight_rate(site, unit, commodity_group, freight_class)
-    if error:
-        return error, freight_class, None, None, None
-
-    discount = discounts.get(unit, {}).get(site, 1)
-    raw_cost = rate * discount * quantity
-    min_charge = minimum_charges.get(site, {}).get(commodity_group, 0)
-
-    if apply_minimum:
-        cost = round(max(raw_cost, min_charge), 2)
-        min_applied = raw_cost < min_charge
-    else:
-        cost = round(raw_cost, 2)
-        min_applied = False
-
-    if quantity is None or quantity <= 0:
-        return f"Invalid quantity: {quantity}", None, None, None, None, None
-
-    return cost, freight_class, rate, discount, min_applied, raw_cost
 
 
 def classify_shipment_by_uom(qty: float, uom: str) -> str:
     print(f"🧪 Classifying shipment: qty={qty}, uom={uom}")
     if uom == 'LBS':
-        return 'FTL' if qty >= 20000 else 'LTL'
+        return 'FTL' if qty > 19999 else 'LTL'
     elif uom == 'SQYD':
-        return 'FTL' if qty >= 2200 else 'LTL'
+        return 'FTL' if qty > 2200 else 'LTL'
     else:
         return 'Unknown'
 
 
-def apply_market_freight_discount(df: pd.DataFrame, column="freight_per_invoice") -> pd.DataFrame:
+def compute_invoice_freight_rate(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Adds a new column with the adjusted market freight rate.
+    Determines invoice-level freight class, rate, rate unit, and shipment type (LTL/FTL).
 
-    Parameters:
-    - df: input DataFrame
-    - column: name of column containing original freight values
+    Assumes:
+    - 'invoice_id', 'total_standard_quantity', 'site', 'est_commodity_group', 'est_standard_uom' exist
 
     Returns:
-    - DataFrame with new column 'adjusted_freight_price'
+    - df: merged with invoice-level freight_class, rate, rate_unit, and shipment_type
     """
-    logging.info(
-        f"✅ Applying market freight discount of {MARKET_RATE_DISCOUNT*100:.0f}% to '{column}'...")
-    df['adjusted_freight_price'] = df[column] / (1 + MARKET_RATE_DISCOUNT)
+    results = []
+
+    for _, row in df.iterrows():
+        try:
+            site = row["site"]
+            group = row["est_commodity_group"]
+            total_qty = row["est_total_quantity"]
+            std_uom = row["est_standard_uom"]
+
+            # Determine method and rate unit
+            method = "CWT" if group == "1VNL" else "AREA"
+            rate_unit = "CWT" if method == "CWT" else "SQYD"
+
+            # Freight class based on total standardized quantity
+            freight_class = get_priority_class(total_qty)
+
+            # Rate lookup
+            rate, error = get_freight_rate(
+                site, rate_unit, group, freight_class)
+            if error:
+                raise ValueError(error)
+
+            # Shipment classification
+            shipment_type = classify_shipment_by_uom(
+                total_qty, "LBS" if method == "CWT" else "SQYD")
+
+        except Exception as e:
+            freight_class = None
+            rate = None
+            rate_unit = None
+            shipment_type = None
+
+        results.append({
+            "invoice_id": row["invoice_id"],
+            "est_freight_class": freight_class,
+            "est_xgs_rate": rate/100 if method == "CWT" else rate,
+            "est_rate_unit": "$/lbs" if method == "CWT" else "$/SQYD",
+            "est_shipment_type": shipment_type
+        })
+
+    return df.merge(pd.DataFrame(results), on="invoice_id", how="left")
+
+
+def compute_xgs_invoice_costs(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Computes:
+    - xgs_total_invoice_raw_cost = invoice_xgs_rate * est_total_quantity
+    - xgs_total_invoice_normalised_cost = max(raw_cost, minimum_charge)
+    Adds a flag 'xgs_min_applied' if minimum was used.
+
+    Assumes:
+    - 'invoice_xgs_rate', 'est_total_quantity', 'site', 'est_commodity_group' exist
+
+    Returns:
+    - df with 3 new columns added
+    """
+    def compute_cost(row):
+        try:
+            rate = row['est_xgs_rate']
+            qty = row['est_total_quantity']
+            site = row['site'].upper()
+            group = row['est_commodity_group'].upper()
+
+            raw_cost = round(rate * qty, 2)
+            min_charge = minimum_charges.get(site, {}).get(group, 0)
+
+            norm_cost = max(
+                raw_cost, min_charge) if APPLY_MINIMUM_CHARGES else raw_cost
+            min_applied = raw_cost < min_charge if APPLY_MINIMUM_CHARGES else False
+
+            return pd.Series({
+                "est_xgs_total_raw_cost": raw_cost,
+                "est_xgs_total_normalised_cost": norm_cost,
+                "est_xgs_min_applied": min_applied
+            })
+        except Exception as e:
+            return pd.Series({
+                "est_xgs_total_raw_cost": None,
+                "est_xgs_total_normalised_cost": None,
+                "est_xgs_min_applied": False
+            })
+
+    df = pd.concat([df, df.apply(compute_cost, axis=1)], axis=1)
+
+    # Calculate beta_xgs_rate: cost per unit
+    df["est_normalised_xgs_rate"] = df.apply(
+        lambda row: round(
+            row["est_xgs_total_normalised_cost"] / row["est_total_quantity"], 4)
+        if pd.notnull(row["est_xgs_total_normalised_cost"]) and row["est_total_quantity"] > 0 else None,
+        axis=1
+    )
+
     return df
 
 
-def standardize_quantity_and_classify(
-    commodity_group: str,
-    inv_uom: str,
-    invoiced_line_qty: float,
-    conversion_code: str
-) -> Tuple[str, float, float, str]:
-    """
-    Determines standard UOM, SQYD quantity, LBS, and final shipment type (FTL/LTL).
-    """
-    inv_uom = normalize_uom(inv_uom)
-    commodity_group = commodity_group.upper()
+# === Output Filter Function ===
+def freight_model_output(df: pd.DataFrame) -> pd.DataFrame:
+    columns_to_keep = [
+        "site", "site_description", "supplier_no", "supplier_name", "invoice_id",
+        "account", "account_description", "ship_to_zip", "po_no", "part_no",
+        "part_description", "inv_uom", "invoiced_line_qty", "est_commodity_group",
+        "est_method_used", "est_standard_quantity", "est_standard_uom", "est_lbs_per_uom",
+        "est_market_freight_costs", "est_total_quantity", "est_market_rate",
+        "est_freight_class", "est_xgs_rate", "est_rate_unit", "est_shipment_type",
+        "est_xgs_total_raw_cost", "est_xgs_total_normalised_cost",
+        "est_normalised_xgs_rate", "est_xgs_min_applied", "market_cost_outlier"
+    ]
+    return df[[col for col in columns_to_keep if col in df.columns]]
 
-    if commodity_group == "1VNL":
-        # Always convert to SQYD first if SQFT
-        if inv_uom == "SQFT":
-            sqyd_qty = sqft_to_sqyd(invoiced_line_qty)
-        elif inv_uom == "SQYD":
-            sqyd_qty = invoiced_line_qty
-        else:
-            return "Unknown", None, None, "Unknown"
 
-        # Convert to weight using conversion_code
-        try:
-            lbs, _, _ = convert_area_to_weight(sqyd_qty, conversion_code)
-        except Exception as e:
-            return "LBS", sqyd_qty, None, f"Error: {e}"
+# === Outlier Detection Using IQR ===
+def flag_market_cost_outliers(df: pd.DataFrame) -> pd.DataFrame:
+    if "est_market_freight_costs" not in df.columns:
+        raise ValueError(
+            "Column 'est_market_freight_costs' is missing from the DataFrame.")
 
-        shipment_type = classify_shipment_by_uom(lbs, "LBS")
-        return "LBS", sqyd_qty, lbs, shipment_type
+    q1 = df["est_market_freight_costs"].quantile(0.25)
+    q3 = df["est_market_freight_costs"].quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
 
-    elif commodity_group in ["1CBL", "1CPT"]:
-        # Carpet-based products → use SQYD directly
-        if inv_uom == "SQFT":
-            sqyd_qty = sqft_to_sqyd(invoiced_line_qty)
-        elif inv_uom == "SQYD":
-            sqyd_qty = invoiced_line_qty
-        else:
-            return "Unknown", None, None, "Unknown"
-
-        shipment_type = classify_shipment_by_uom(sqyd_qty, "SQYD")
-        return "SQYD", sqyd_qty, None, shipment_type
-
-    else:
-        return "Unknown", None, None, "Unknown"
+    df["market_cost_outlier"] = df["est_market_freight_costs"].apply(
+        lambda x: "LOW" if x < lower_bound else (
+            "HIGH" if x > upper_bound else "NORMAL")
+    )
+    return df
