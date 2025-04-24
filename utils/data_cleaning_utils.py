@@ -110,11 +110,19 @@ def data_cleaning(input_df, commodity_df=None, manufacturer_df=None, base_path="
     # Normalize UOM and classify
     input_commodity_manufacturer_df['inv_uom'] = input_commodity_manufacturer_df['inv_uom'].str.strip(
     ).str.upper()
+    # Identify which rows are directly classified 
+    input_commodity_manufacturer_df['is_classified'] = input_commodity_manufacturer_df['inv_uom'].isin(['SQFT', 'SQYD'])
+    # Map: does each invoice_id contain any classified lines?
+    invoice_classified_map = input_commodity_manufacturer_df.groupby('invoice_id')['is_classified'].any()
+    input_commodity_manufacturer_df['invoice_has_classified'] = input_commodity_manufacturer_df['invoice_id'].map(invoice_classified_map)
+    
     input_commodity_manufacturer_df['classification'] = input_commodity_manufacturer_df.apply(
-        lambda row: 'Classified' if row['inv_uom'] in ['SQFT', 'SQYD']
-        else ('No UOM' if pd.isna(row['inv_uom']) or row['inv_uom'] == '' else 'Unclassified'),
-        axis=1
+    lambda row: 'Classified' if row['is_classified']
+    else ('Unknown Classification' if row['invoice_has_classified']
+    else 'Unclassified'),
+    axis=1
     )
+
 
     # Classify commodity and map group
     input_commodity_manufacturer_df['new_commodity_description'] = input_commodity_manufacturer_df.apply(
