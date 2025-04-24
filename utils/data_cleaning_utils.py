@@ -308,6 +308,7 @@ def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
     - df_sampled: DataFrame with the specified sample size
     """
+    logging.info("✅ increasing freight per invoice.")
     # Calculate the priority product total
    # filtered_invoices = df[
    #     (df['has_freight_line'] == True) &
@@ -364,6 +365,7 @@ def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
         how='left'
     )
     # return the output dataframe
+    logging.info("✅ completed increasing sample size.")
     return df
 
 
