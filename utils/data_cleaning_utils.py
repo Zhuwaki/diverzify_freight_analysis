@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -51,76 +52,89 @@ def map_commodity_group(x):
 # This function will classify the commodity from old codes to new codes and merge with manufacturers
 
 
-def data_cleaning(input_df, commodity_df=None, manufacturer_df=None):
+def data_cleaning(input_df, commodity_df=None, manufacturer_df=None, base_path="data/input"):
     logging.info("🔧 Running data_cleaning...")
+
+    # Load commodity_df if not provided
     try:
         if commodity_df is None:
+            commodity_path = os.path.join(
+                base_path, "IFS Cloud Commodity Groups.xlsx")
             commodity_df = pd.read_excel(
-                "data/input/IFS Cloud Commodity Groups.xlsx", sheet_name='Commodity Groups', engine="openpyxl")
+                commodity_path, sheet_name='Commodity Groups', engine="openpyxl"
+            )
     except Exception as e:
         raise Exception(f"💥 Failed to load commodity_df: {str(e)}")
 
+    # Load manufacturer_df if not provided
     try:
         if manufacturer_df is None:
+            manufacturer_path = os.path.join(
+                base_path, "Manufacturer List.xlsx")
             manufacturer_df = pd.read_excel(
-                "data/input/Manufacturer List.xlsx", sheet_name='Sheet1', engine="openpyxl")
+                manufacturer_path, sheet_name='Sheet1', engine="openpyxl"
+            )
     except Exception as e:
         raise Exception(f"💥 Failed to load manufacturer_df: {str(e)}")
-    # print(manufacturer_df)
-    # print(commodity_df)
-    # Normalize column names to lowercase and replace spaces with underscores
-    # Normalize column names to lowercase and replace spaces with underscores
+
+    # Normalize column names
     input_df.columns = input_df.columns.str.strip().str.lower().str.replace(" ", "_")
     commodity_df.columns = commodity_df.columns.str.strip(
     ).str.lower().str.replace(" ", "_")
     manufacturer_df.columns = manufacturer_df.columns.str.strip(
     ).str.lower().str.replace(" ", "_")
-    # Convert 'Commodity Group' to string and create a new column 'COMM 1'
+
+    # Standardize and join with commodity data
     commodity_df['comm_1'] = commodity_df['commodity_group'].astype(str)
-    # Convert 'Commodity Group' to string in the main DataFrame
     input_df['comm_1'] = input_df['comm_1'].astype(str)
-    # Perform the join on the 'COMM 1' column
     input_commodity_df = input_df.merge(commodity_df, on='comm_1', how='left')
-# Flag matched and unmatched rows clearly
     input_commodity_df['match_commodity'] = input_commodity_df['commodity_group'].apply(
         lambda x: 'Commodity Found' if pd.notna(x) else 'Commodity Not Found'
     )
-    # Replace values in the 'uom' column
+
+    # Replace UOM codes
     input_commodity_df['inv_uom'] = input_commodity_df['inv_uom'].replace(
         {'SF': 'SQFT', 'SY': 'SQYD'})
 
-    # Convert 'Commodity Group' to string and create a new column 'COMM 1'
+    # Join with manufacturer data
     manufacturer_df['supplier_no'] = manufacturer_df['supplier_no'].astype(str)
-    # Convert 'Commodity Group' to string in the main DataFrame
     input_commodity_df['supplier_no'] = input_commodity_df['supplier_no'].astype(
         str)
-    # Perform the join on the 'COMM 1' column
-    input_commodity_manufactuer_df = input_commodity_df.merge(
-        manufacturer_df[['supplier_no']], on='supplier_no', how='left')
-    input_commodity_manufactuer_df['match_supplier'] = input_commodity_manufactuer_df['supplier_name'].apply(
+    input_commodity_manufacturer_df = input_commodity_df.merge(
+        manufacturer_df[['supplier_no']], on='supplier_no', how='left'
+    )
+    input_commodity_manufacturer_df['match_supplier'] = input_commodity_manufacturer_df['supplier_name'].apply(
         lambda x: 'Supplier registered' if pd.notna(x) else 'No supplier found'
     )
-    # Normalize the 'INV UOM' column to handle case sensitivity and strip spaces
-    input_commodity_manufactuer_df['inv_uom'] = input_commodity_manufactuer_df['inv_uom'].str.strip(
+
+    # Normalize UOM and classify
+    input_commodity_manufacturer_df['inv_uom'] = input_commodity_manufacturer_df['inv_uom'].str.strip(
     ).str.upper()
-    # Classify rows based on 'INV UOM' values
-    input_commodity_manufactuer_df['classification'] = input_commodity_manufactuer_df.apply(
+    input_commodity_manufacturer_df['classification'] = input_commodity_manufacturer_df.apply(
         lambda row: 'Classified' if row['inv_uom'] in ['SQFT', 'SQYD']
         else ('No UOM' if pd.isna(row['inv_uom']) or row['inv_uom'] == '' else 'Unclassified'),
         axis=1
     )
-    input_commodity_manufactuer_df['new_commodity_description'] = input_commodity_manufactuer_df.apply(
-        classify_commodity, axis=1)
-    input_commodity_manufactuer_df['new_commodity_group'] = input_commodity_manufactuer_df['commodity_group'].apply(
-        map_commodity_group)
 
-# Create a new column 'conversion_code' based on the 'Description' + 'Comodity Group' + 'INV UOM' column
-    input_commodity_manufactuer_df['conversion_code'] = input_commodity_manufactuer_df['new_commodity_description'].str.replace(' ', '_', regex=True).astype(
-        str) + '_' + input_commodity_manufactuer_df['new_commodity_group'].astype(str) + '_' + input_commodity_manufactuer_df['inv_uom'].astype(str)
+    # Classify commodity and map group
+    input_commodity_manufacturer_df['new_commodity_description'] = input_commodity_manufacturer_df.apply(
+        classify_commodity, axis=1
+    )
+    input_commodity_manufacturer_df['new_commodity_group'] = input_commodity_manufacturer_df['commodity_group'].apply(
+        map_commodity_group
+    )
+
+    # Build conversion code
+    input_commodity_manufacturer_df['conversion_code'] = (
+        input_commodity_manufacturer_df['new_commodity_description'].str.replace(
+            ' ', '_', regex=True).astype(str)
+        + '_' +
+        input_commodity_manufacturer_df['new_commodity_group'].astype(str)
+        + '_' + input_commodity_manufacturer_df['inv_uom'].astype(str)
+    )
 
     logging.info("✅ data_cleaning complete.")
-
-    return input_commodity_manufactuer_df
+    return input_commodity_manufacturer_df
 
 
 def uom_cleaning(df):
@@ -282,6 +296,7 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+
 def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
     """
     Increases the sample size of the DataFrame to a specified number of rows.
@@ -294,35 +309,42 @@ def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
     - df_sampled: DataFrame with the specified sample size
     """
     # Calculate the priority product total
-    filtered_invoices = df[
-        (df['freight_invoice'] == True) & 
-        (df['any_priority_products'] == True)
-    ]
-    priority_yes_totals = filtered_invoices[
-        (filtered_invoices['account'] == 2008) & 
-        (filtered_invoices['priority'] == 'Yes')
+   # filtered_invoices = df[
+   #     (df['has_freight_line'] == True) &
+   #     (df['any__invoice_priority_products_(2008)'] == True)
+    # ]
+    priority_yes_totals = df[
+        (df['account'] == 2008) &
+        (df['priority'] == 'Yes')
     ].groupby('invoice_id')['invoice_line_total'].sum().reset_index()
-    priority_yes_totals.rename(columns={'invoice_line_total': 'priority_yes_total'}, inplace=True)
+    priority_yes_totals.rename(
+        columns={'invoice_line_total': 'priority_yes_total'}, inplace=True)
 
-    # Calculate the no priority product total 
-    priority_no_totals = filtered_invoices[
-        (filtered_invoices['account'] == 2008) & 
-        (filtered_invoices['priority'] == 'No')
+    # Calculate the no priority product total
+    priority_no_totals = df[
+        (df['account'] == 2008) &
+        (df['priority'] == 'No')
     ].groupby('invoice_id')['invoice_line_total'].sum().reset_index()
-    priority_no_totals.rename(columns={'invoice_line_total': 'priority_no_total'}, inplace=True)
-    # Merge the two dataframe 
-    priority_totals = pd.merge(priority_yes_totals, priority_no_totals, on='invoice_id', how='outer').fillna(0)
+    priority_no_totals.rename(
+        columns={'invoice_line_total': 'priority_no_total'}, inplace=True)
+    # Merge the two dataframe
+    priority_totals = pd.merge(
+        priority_yes_totals, priority_no_totals, on='invoice_id', how='outer').fillna(0)
     # Calculate percentage of priority product total to no priority product total
     priority_totals['total_invoice_line_total'] = (
-        priority_totals['priority_yes_total'] + priority_totals['priority_no_total']
+        priority_totals['priority_yes_total'] +
+        priority_totals['priority_no_total']
     )
     priority_totals['percentage_yes'] = (
-        priority_totals['priority_yes_total'] / priority_totals['total_invoice_line_total']
+        priority_totals['priority_yes_total'] /
+        priority_totals['total_invoice_line_total']
     ) * 100
     priority_totals['percentage_no'] = (
-        priority_totals['priority_no_total'] / priority_totals['total_invoice_line_total']
+        priority_totals['priority_no_total'] /
+        priority_totals['total_invoice_line_total']
     ) * 100
-    priority_totals[['percentage_yes', 'percentage_no']] = priority_totals[['percentage_yes', 'percentage_no']].fillna(0)
+    priority_totals[['percentage_yes', 'percentage_no']] = priority_totals[[
+        'percentage_yes', 'percentage_no']].fillna(0)
     # Rename for clarity
     mapped_dic = {
         'priority_yes_total': 'Priority_product_invoice_total',
@@ -330,13 +352,17 @@ def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
         'percentage_yes': 'pct_priority_product_invoice_total'
     }
     df_renamed = priority_totals.rename(columns=mapped_dic)
+    print(df_renamed['pct_priority_product_invoice_total'].head())
+    print((df_renamed['pct_priority_product_invoice_total'] > 70).head())
+
     df_renamed['low_mix_priority_flag'] = df_renamed['pct_priority_product_invoice_total'] > 70
+
     # Merge output dataframe with the original dataframe
     df = df.merge(
-    df_renamed[['invoice_id', 'low_mix_Priority_Flag']],
-    on='invoice_id',
-    how='left'
-)
+        df_renamed[['invoice_id', 'low_mix_priority_flag']],
+        on='invoice_id',
+        how='left'
+    )
     # return the output dataframe
     return df
 

@@ -5,6 +5,7 @@ from utils.data_cleaning_utils import (
     flag_fully_converted_invoices,
     add_freight_per_invoice,
     filter_valid_invoices,
+    increase_sample_size,
 )
 import traceback
 import orjson
@@ -38,7 +39,8 @@ async def clean_raw_file(file: UploadFile = File(...)):
         df = flag_fully_converted_invoices(df, conversion_csv_path)
         df = enrich_invoice_flags(df)
         df = add_freight_per_invoice(df)
-        df = filter_valid_invoices(df)
+        df = increase_sample_size(df)
+       # df = filter_valid_invoices(df)
 
         df = df.replace([float("inf"), float("-inf")],
                         None).where(pd.notnull(df), None)
