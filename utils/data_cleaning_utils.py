@@ -282,6 +282,64 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Increases the sample size of the DataFrame to a specified number of rows.
+
+    Parameters:
+    - df: DataFrame to be sampled
+    - sample_size: Desired number of rows in the output DataFrame
+
+    Returns:
+    - df_sampled: DataFrame with the specified sample size
+    """
+    # Calculate the priority product total
+    filtered_invoices = df[
+        (df['freight_invoice'] == True) & 
+        (df['any_priority_products'] == True)
+    ]
+    priority_yes_totals = filtered_invoices[
+        (filtered_invoices['account'] == 2008) & 
+        (filtered_invoices['priority'] == 'Yes')
+    ].groupby('invoice_id')['invoice_line_total'].sum().reset_index()
+    priority_yes_totals.rename(columns={'invoice_line_total': 'priority_yes_total'}, inplace=True)
+
+    # Calculate the no priority product total 
+    priority_no_totals = filtered_invoices[
+        (filtered_invoices['account'] == 2008) & 
+        (filtered_invoices['priority'] == 'No')
+    ].groupby('invoice_id')['invoice_line_total'].sum().reset_index()
+    priority_no_totals.rename(columns={'invoice_line_total': 'priority_no_total'}, inplace=True)
+    # Merge the two dataframe 
+    priority_totals = pd.merge(priority_yes_totals, priority_no_totals, on='invoice_id', how='outer').fillna(0)
+    # Calculate percentage of priority product total to no priority product total
+    priority_totals['total_invoice_line_total'] = (
+        priority_totals['priority_yes_total'] + priority_totals['priority_no_total']
+    )
+    priority_totals['percentage_yes'] = (
+        priority_totals['priority_yes_total'] / priority_totals['total_invoice_line_total']
+    ) * 100
+    priority_totals['percentage_no'] = (
+        priority_totals['priority_no_total'] / priority_totals['total_invoice_line_total']
+    ) * 100
+    priority_totals[['percentage_yes', 'percentage_no']] = priority_totals[['percentage_yes', 'percentage_no']].fillna(0)
+    # Rename for clarity
+    mapped_dic = {
+        'priority_yes_total': 'Priority_product_invoice_total',
+        'total_invoice_line_total': 'All_priority_invoice_total',
+        'percentage_yes': 'pct_priority_product_invoice_total'
+    }
+    df_renamed = priority_totals.rename(columns=mapped_dic)
+    df_renamed['low_mix_priority_flag'] = df_renamed['pct_priority_product_invoice_total'] > 70
+    # Merge output dataframe with the original dataframe
+    df = df.merge(
+    df_renamed[['invoice_id', 'low_mix_Priority_Flag']],
+    on='invoice_id',
+    how='left'
+)
+    # return the output dataframe
+    return df
+
 
 def filter_valid_invoices(mapped_df):
     site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW',
