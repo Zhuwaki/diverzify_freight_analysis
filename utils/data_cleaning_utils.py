@@ -92,10 +92,6 @@ def data_cleaning(input_df, commodity_df=None, manufacturer_df=None, base_path="
         lambda x: 'Commodity Found' if pd.notna(x) else 'Commodity Not Found'
     )
 
-    # Replace UOM codes
-    input_commodity_df['inv_uom'] = input_commodity_df['inv_uom'].replace(
-        {'SF': 'SQFT', 'SY': 'SQYD'})
-
     # Join with manufacturer data
     manufacturer_df['supplier_no'] = manufacturer_df['supplier_no'].astype(str)
     input_commodity_df['supplier_no'] = input_commodity_df['supplier_no'].astype(
@@ -106,6 +102,10 @@ def data_cleaning(input_df, commodity_df=None, manufacturer_df=None, base_path="
     input_commodity_manufacturer_df['match_supplier'] = input_commodity_manufacturer_df['supplier_name'].apply(
         lambda x: 'Supplier registered' if pd.notna(x) else 'No supplier found'
     )
+
+    # Replace UOM codes
+    input_commodity_df['inv_uom'] = input_commodity_df['inv_uom'].replace(
+        {'SF': 'SQFT', 'SY': 'SQYD'})
 
     # Normalize UOM and classify
     input_commodity_manufacturer_df['inv_uom'] = input_commodity_manufacturer_df['inv_uom'].str.strip(
@@ -139,8 +139,7 @@ def data_cleaning(input_df, commodity_df=None, manufacturer_df=None, base_path="
 
 def uom_cleaning(df):
     logging.info("✅ fixing unit of measure.")
-    # checking which of the rows in an invoice matching 2008 has unclassified items
-    # Check if all rows with account == 2008 are classified
+
     # Step 1: Identify invoice_ids where ALL rows with ACCOUNT == 2008 are classified
     uom_output = df
     classified_invoice_ids = (
@@ -313,6 +312,7 @@ def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
    #     (df['has_freight_line'] == True) &
    #     (df['any__invoice_priority_products_(2008)'] == True)
     # ]
+
     priority_yes_totals = df[
         (df['account'] == 2008) &
         (df['priority'] == 'Yes')
@@ -364,6 +364,41 @@ def increase_sample_size(df: pd.DataFrame) -> pd.DataFrame:
         how='left'
     )
     # return the output dataframe
+    return df
+
+
+def resampling(df: pd.DataFrame):
+    # Step 1: Filter only account 2008
+    df_2008 = df[df['account'] == 2008].copy()
+
+    # Step 2: Total for priority == Yes per invoice
+    priority_yes_totals = df_2008[df_2008['priority'] == 'Yes'].groupby(
+        'invoice_id')['invoice_line_total'].sum().reset_index()
+    priority_yes_totals.rename(
+        columns={'invoice_line_total': 'priority_yes_total'}, inplace=True)
+
+    # Step 3: Total for all account 2008 per invoice
+    total_2008_totals = df_2008.groupby(
+        'invoice_id')['invoice_line_total'].sum().reset_index()
+    total_2008_totals.rename(
+        columns={'invoice_line_total': 'total_2008_invoice_total'}, inplace=True)
+
+    # Step 4: Merge the two summaries
+    merged_totals = pd.merge(
+        total_2008_totals, priority_yes_totals, on='invoice_id', how='left')
+    merged_totals['priority_yes_total'] = merged_totals['priority_yes_total'].fillna(
+        0)
+
+    # Step 5: Calculate percentage
+    merged_totals['pct_priority_yes_2008'] = (
+        merged_totals['priority_yes_total'] /
+        merged_totals['total_2008_invoice_total'] * 100
+    )
+    # ✅ Add flag column based on percentage threshold
+    merged_totals['baseline_sample'] = merged_totals['pct_priority_yes_2008'] > 70
+    # Step 6: Merge back into original DataFrame
+    df = df.merge(merged_totals, on='invoice_id', how='left')
+
     return df
 
 
