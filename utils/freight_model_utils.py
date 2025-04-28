@@ -101,7 +101,7 @@ print("✅ Loaded commodity groups from conversion table:", set(
 # === Utility Functions ===
 
 
-def get_priority_class(quantity: float) -> str:
+def get_freight_class(quantity: float) -> str:
     if not isinstance(quantity, (int, float)) or pd.isna(quantity) or quantity < 0:
         raise ValueError(
             f"❌ Invalid quantity passed to freight class logic: {quantity}")
@@ -349,7 +349,7 @@ def compute_invoice_freight_rate(df: pd.DataFrame) -> pd.DataFrame:
             rate_unit = "CWT" if method == "CWT" else "SQYD"
 
             # Freight class based on total standardized quantity
-            freight_class = get_priority_class(total_qty)
+            freight_class = get_freight_class(total_qty)
 
             # Rate lookup
             rate, error = get_freight_rate(

@@ -1,11 +1,19 @@
 from utils.data_cleaning_utils import (
-    data_cleaning,
-    enrich_invoice_flags,
-    uom_cleaning,
-    flag_fully_converted_invoices,
+
+    map_commodity_and_manufacturer,
+    create_conversion_code,
+    classify_invoice_priority_uom,
+    classify_line_uom,
+    invoice_uom_classification,
+    classify_invoice_priority_conversion,
+    classify_freight_lines,
+    classify_parts_and_commodities,
+    classify_priority_products_2008,
     add_freight_per_invoice,
+    priority_product_composition,
     filter_valid_invoices,
-    increase_sample_size,
+
+
 )
 import traceback
 import orjson
@@ -15,6 +23,8 @@ import pandas as pd
 from datetime import datetime
 from fastapi import UploadFile, File, APIRouter
 from fastapi.responses import JSONResponse
+import numpy as np
+
 
 router = APIRouter()
 conversion_csv_path = "data/input/freight_model/conversion_table_standardized.csv"
@@ -34,22 +44,87 @@ async def clean_raw_file(file: UploadFile = File(...)):
         else:
             return {"error": "Unsupported file format"}
 
-        df = data_cleaning(df)
-        df = uom_cleaning(df)
-        df = flag_fully_converted_invoices(df, conversion_csv_path)
-        df = enrich_invoice_flags(df)
+        df = map_commodity_and_manufacturer(df)
+        df = classify_line_uom(df)
+        df = classify_invoice_priority_uom(df)
+        df = create_conversion_code(df)
+        df = classify_invoice_priority_conversion(df, conversion_csv_path)
+        df = classify_freight_lines(df)
+        df = classify_parts_and_commodities(df)
+        df = classify_priority_products_2008(df)
         df = add_freight_per_invoice(df)
-        df = increase_sample_size(df)
-       # df = filter_valid_invoices(df)
+        df = priority_product_composition(df)
+        df = filter_valid_invoices(df)
 
-        df = df.replace([float("inf"), float("-inf")],
-                        None).where(pd.notnull(df), None)
+        # First: Replace infinities
+        df = df.replace([np.inf, -np.inf], np.nan)
+
+        # Second: Replace NaNs with None using .mask
+        df = df.mask(df.isna(), None)
+        # 🛡️ Fix numpy.bool_ to Python bool
+        for col in df.select_dtypes(include=['bool']).columns:
+            df[col] = df[col].astype(bool)
 
         # Save as CSV
         os.makedirs("data/downloads", exist_ok=True)
         filename = f"cleaned_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         filepath = os.path.join("data/downloads", filename)
         df.to_csv(filepath, index=False)
+        # Fill numeric columns NaN with 0
+        numeric_cols = df.select_dtypes(
+            include=['float64', 'float32', 'int64']).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
+
+        # Convert DataFrame to JSON
+        # 🧪 Scan entire DataFrame before JSONResponse
+
+        # 🛡️ Step 1: Flag bad rows (rows with NaN, inf, or -inf)
+        bad_rows = df[
+            df.isin([np.inf, -np.inf]).any(axis=1) |
+            df.isnull().any(axis=1)
+        ]
+
+        if not bad_rows.empty:
+            print(
+                f"⚠️ Found {len(bad_rows)} bad rows before JSON serialization!")
+            bad_rows.to_csv(
+                'data/downloads/bad_rows_before_json.csv', index=False)
+        else:
+            print("✅ No bad rows found before JSON serialization.")
+
+        # 🛡️ Step 2: Flag bad columns (columns with NaN, inf, or -inf)
+        bad_columns_summary = []
+
+        for col in df.columns:
+            # Check for NaN and inf in each column
+            col_is_nan = df[col].isnull().sum()
+            col_is_inf = df[col].isin([np.inf, -np.inf]).sum()
+            total = len(df)
+
+            if col_is_nan > 0 or col_is_inf > 0:
+                bad_columns_summary.append({
+                    'column_name': col,
+                    'nan_count': col_is_nan,
+                    'inf_count': col_is_inf,
+                    'total_rows': total,
+                    'nan_pct': round((col_is_nan / total) * 100, 2),
+                    'inf_pct': round((col_is_inf / total) * 100, 2),
+                    'dtype': df[col].dtype
+                })
+
+        # Output bad columns summary
+        if bad_columns_summary:
+            bad_columns_df = pd.DataFrame(bad_columns_summary)
+            bad_columns_df.to_csv(
+                'data/downloads/bad_columns_summary.csv', index=False)
+            print("⚠️ Bad columns detected and exported.")
+        else:
+            print("✅ No bad columns detected.")
+
+        # Final protection against JSON crash
+        numeric_cols = df.select_dtypes(
+            include=['float64', 'float32', 'int64']).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
 
         return JSONResponse(content={
             "message": "✅ Cleaning complete",
