@@ -8,8 +8,12 @@ from datetime import datetime
 
 
 from utils.invoice_freight_utils import (
-    prepare_invoice_freight_summary,
-    standardize_input_data
+    estimate_invoice_freight,
+    calibrate_surcharge,
+    compute_market_rates,
+    flag_market_cost_outliers,
+    compute_freight_and_rate_ratios,
+    filter_valid_priority_lines
 )
 
 router = APIRouter()
@@ -41,9 +45,13 @@ async def estimate_batch(file: UploadFile = File(...)):
         # df = pd.concat([df, freight_estimates], axis=1)
 
         # Step 2: Aggregate invoice-level freight costs
-       # df = estimate_total_freight(df)
-        # df = standardize_input_data(df)
-        df = prepare_invoice_freight_summary(df)
+
+        df = estimate_invoice_freight(df)
+        df = calibrate_surcharge(df)
+        df = compute_market_rates(df)
+        df = compute_freight_and_rate_ratios(df)
+        df = flag_market_cost_outliers(df)
+        df = filter_valid_priority_lines(df)
 
         # Save output
         os.makedirs("data/downloads", exist_ok=True)

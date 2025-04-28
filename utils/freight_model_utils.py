@@ -173,14 +173,33 @@ def standardize_commodity(
     print(f"🧪 Estimating standardized quantity only...")
 
     def normalize_uom(uom: str) -> str:
+        if not isinstance(uom, str):
+            return ""
         uom = uom.strip().upper()
         return "SQFT" if uom == "SF" else "SQYD" if uom == "SY" else uom
 
     def sqft_to_sqyd(sqft: float) -> float:
         return sqft / 9
 
-    site = site.upper()
-    group = commodity_group.upper()
+    # Initialize output structure
+    output = {
+        "standard_quantity": None,
+        "standard_uom": None,
+        "lbs_per_uom": None,
+        "standardization_error": None
+    }
+
+    # Validate inputs
+    if not isinstance(commodity_group, str) or not commodity_group.strip():
+        output["standardization_error"] = f"Invalid commodity group '{commodity_group}' (must be a non-empty string)"
+        return output
+
+    if not isinstance(site, str) or not site.strip():
+        output["standardization_error"] = f"Invalid site '{site}' (must be a non-empty string)"
+        return output
+
+    site = site.strip().upper()
+    group = commodity_group.strip().upper()
     uom = normalize_uom(inv_uom)
 
     method = "CWT" if group == "1VNL" else "AREA" if group in [
@@ -194,34 +213,36 @@ def standardize_commodity(
             std_qty = quantity
             std_uom = "SQYD"
         else:
-            return {"error": f"Unsupported UOM '{uom}' for AREA-based group"}
+            output["standardization_error"] = f"Unsupported UOM '{uom}' for AREA-based group"
+            return output
 
-        return {
-            "commodity_group": group,
-            "method_used": method,
+        output.update({
             "standard_quantity": round(std_qty, 2),
             "standard_uom": std_uom,
-            "lbs_per_uom": None  # not applicable for AREA
-        }
+            "lbs_per_uom": None,
+            "standardization_error": "Standardization successful"
+        })
+        return output
 
     elif method == "CWT":
         try:
             lbs, input_uom, group, lbs_per_uom, uom_used = convert_area_to_weight(
                 quantity, conversion_code)
         except Exception as e:
-            return {"error": f"Conversion failed: {e}"}
+            output["standardization_error"] = f"Conversion failed: {e}"
+            return output
 
-        return {
-            "commodity_group": group,
-            "method_used": method,
+        output.update({
             "standard_quantity": round(lbs, 2),
             "standard_uom": "LBS",
-            "lbs_per_uom": lbs_per_uom
-        }
+            "lbs_per_uom": lbs_per_uom,
+            "standardization_error": "Standardization successful"
+        })
+        return output
 
     else:
-        return {"error": f"Unsupported commodity group '{group}'"}
-
+        output["standardization_error"] = f"Unsupported commodity group '{commodity_group}'"
+        return output
 
 # Step 2: Compute total_quantity at invoice level
 

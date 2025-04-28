@@ -140,7 +140,7 @@ def classify_invoice_priority_uom(df):
 
     # Only priority commodities considered
     priority_commodities = ['1CBL', '1CPT', '1VNL']
-    priority_df = df[df['commodity_group'].isin(priority_commodities)]
+    priority_df = df[df['new_commodity_group'].isin(priority_commodities)]
 
     # Group by invoice and check if all priority lines are classified
     invoice_classification = priority_df.groupby(
@@ -150,6 +150,8 @@ def classify_invoice_priority_uom(df):
 
     # Merge back into main dataframe
     df = df.merge(invoice_classification, on='invoice_id', how='left')
+    df['invoice_priority_classified'] = df['invoice_priority_classified'].fillna(
+        "NO_PRIORITY")
 
     logging.info("✅ classify_invoice_priority_uom complete.")
     return df
@@ -274,6 +276,34 @@ def classify_parts_and_commodities(df):
                   'multiple_commodities']], on='invoice_id', how='left')
 
     logging.info("✅ classify_parts_and_commodities complete.")
+    return df
+
+
+def classify_priority_commodities(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds:
+    - priority_multiple_commodities: whether invoice has multiple priority commodity groups (only 1CBL, 1VNL, 1CPT)
+    """
+    logging.info("🔧 Running classify_priority_commodities...")
+
+    # Define priority commodities
+    PRIORITY_COMMODITIES = ['1CBL', '1VNL', '1CPT']
+
+    # Filter only priority commodity lines
+    priority_df = df[df['new_commodity_group'].isin(PRIORITY_COMMODITIES)]
+
+    # Group and summarize
+    commodity_summary = priority_df.groupby('invoice_id')[
+        'new_commodity_group'].nunique().reset_index(name='priority_commodity_count')
+
+    # Flagging
+    commodity_summary['priority_multiple_commodities'] = commodity_summary['priority_commodity_count'] > 1
+
+    # Merge back into the main DataFrame
+    df = df.merge(commodity_summary[['invoice_id', 'priority_multiple_commodities']],
+                  on='invoice_id', how='left')
+
+    logging.info("✅ classify_priority_commodities complete.")
     return df
 
 
@@ -472,7 +502,7 @@ def filter_valid_invoices(mapped_df):
 
     # Apply the filters
     filtered_df = mapped_df[
-        (mapped_df['any__invoice_priority_products_(2008)'] == True) &
+        (mapped_df['any_invoice_priority_products_2008'] == True) &
         (mapped_df['has_freight_line'] == True) &
         (mapped_df['site'].isin(site_list)) &
         (mapped_df['invoiced_line_qty'] > 0) &
