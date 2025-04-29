@@ -497,6 +497,19 @@ def resampling(df: pd.DataFrame):
 
 
 def filter_valid_invoices(mapped_df):
+
+    # Apply the filters
+    filtered_df = mapped_df[
+        (mapped_df['has_freight_line'] == True) &
+        (mapped_df['invoiced_line_qty'] > 0) &
+        (mapped_df['freight_per_invoice'] > 0)
+    ]
+    filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
+
+    return filtered_df
+
+
+def filter_sample_invoices(mapped_df):
     site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW',
                  'SPCP', 'SPHU', 'KUS', 'PVF', 'SPTM']
 
