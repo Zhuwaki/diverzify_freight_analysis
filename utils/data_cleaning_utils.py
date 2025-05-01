@@ -204,13 +204,17 @@ def classify_invoice_priority_conversion(df, conversion_lookup):
 
     # Step 2: Line-level conversion feasibility
     def check_conversion(row):
-        group = row['new_commodity_group']
-        if group in ['1CBL', '1CPT']:
-            return True  # Automatically convertible
-        elif group == '1VNL':
-            return row['conversion_code'] in conversion_lookup
-        else:
-            return False  # Should not happen but for safety
+        try:
+            group = row['new_commodity_group']
+            if group in ['1CBL', '1CPT']:
+                return True
+            elif group == '1VNL':
+                return row['conversion_code'] in conversion_lookup
+            else:
+                return False
+        except Exception as e:
+            print("⚠️ Row causing error:", row.to_dict())
+            raise e
 
     priority_df['can_be_converted'] = priority_df.apply(
         check_conversion, axis=1)
@@ -378,6 +382,36 @@ def add_freight_per_invoice(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def add_invoice_total(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds a 'invoice_total' column to the DataFrame where each row reflects
+    the total invoice cost (sum of all line items) for its invoice_id.
+
+    Parameters:
+    - df: DataFrame with at least 'invoice_id', 'invoice_line_total' columns
+
+    Returns:
+    - df: updated DataFrame with 'invoice_total' column
+    """
+    logging.info("✅ Calculating invoice total.")
+    # Step 1: Sum invoice line totals per invoice
+    invoice_totals = (
+        df
+        .groupby('invoice_id', as_index=False)['invoice_line_total']
+        .sum()
+        .rename(columns={'invoice_line_total': 'invoice_total'})
+    )
+
+    # Step 2: Merge and propagate to all rows
+    df = df.merge(invoice_totals, on='invoice_id', how='left')
+
+    # Step 3: Fill NaN with 0 (invoices with no lines)
+    df['invoice_total'] = df['invoice_total'].fillna(0)
+    logging.info("✅ Completed adding invoice total.")
+
+    return df
+
+
 def priority_product_composition(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("✅ increasing freight per invoice.")
 
@@ -497,6 +531,19 @@ def resampling(df: pd.DataFrame):
 
 
 def filter_valid_invoices(mapped_df):
+
+    # Apply the filters
+    filtered_df = mapped_df[
+        (mapped_df['has_freight_line'] == True) &
+        (mapped_df['invoiced_line_qty'] > 0) &
+        (mapped_df['freight_per_invoice'] > 0)
+    ]
+    filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
+
+    return filtered_df
+
+
+def filter_sample_invoices(mapped_df):
     site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW',
                  'SPCP', 'SPHU', 'KUS', 'PVF', 'SPTM']
 
