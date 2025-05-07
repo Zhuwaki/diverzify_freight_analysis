@@ -1,16 +1,14 @@
-
-# === Global Toggles ===
+# This module will contain only the loader utilities.
+import pandas as pd
 import logging
 from typing import Optional, Tuple, Dict
-from datetime import datetime
-import matplotlib.pyplot as plt
-import pandas as pd
-from utils.loaders import load_rate_table_from_csv, load_conversion_table
 
 
-logging.basicConfig(level=logging.INFO)
+XGS_RATE_DISCOUNT = 0.06
+FUEL_SURCHARGE = 1.0
 
 RATES_CSV_PATH = "data/input/freight_model/freight_rates_operating.csv"
+
 CONVERSION_CSV_PATH = "data/input/freight_model/conversion_table_standardized.csv"
 
 # === Constants ===
@@ -90,13 +88,93 @@ minimum_charges = {
 # === Loaders ===
 
 
-rates = load_rate_table_from_csv(RATES_CSV_PATH)
-conversion_lookup = load_conversion_table(CONVERSION_CSV_PATH)
-print("✅ Loaded commodity groups from conversion table:", set(
-    [v["commodity_group"] for v in conversion_lookup.values()]))
+# === Constants for loader use ===
+class_breakpoints = [
+    ("L5C", 0, 499), ("5C", 500, 999), ("1M", 1000, 1999),
+    ("2M", 2000, 2999), ("3M", 3000, 4999), ("5M", 5000, 9999),
+    ("10M", 10000, 19999), ("20M", 20000, 29999),
+    ("30M", 30000, 39999), ("40M", 40000, float("inf")),
+]
+
+logging.basicConfig(level=logging.INFO)
 
 
-# === Utility Functions ===
+def load_rate_table_from_csv(filepath: str, apply_discount: bool = True) -> Dict:
+    df = pd.read_csv(filepath)
+    df.columns = [col.strip().lower() for col in df.columns]
+
+    valid_class_cols = [c[0].lower() for c in class_breakpoints]
+    required_cols = ["site", "unit", "commodity_group"]
+
+    for col in required_cols:
+        if col not in df.columns:
+            raise KeyError(f"Missing required column '{col}' in rate table.")
+
+    rate_table = {}
+
+    for _, row in df.iterrows():
+        site = row["site"].strip().upper()
+        unit = row["unit"].strip().upper()
+        commodity = str(row["commodity_group"]).strip().upper()
+
+        rate_table.setdefault(site, {}).setdefault(
+            unit, {}).setdefault(commodity, {})
+
+        for col in df.columns:
+            if col not in valid_class_cols:
+                continue
+
+            rate = row[col]
+            try:
+                if pd.notna(rate):
+                    rate_table[site][unit][commodity][col.upper()] = (
+                        float(
+                            rate)*(FUEL_SURCHARGE/(1 + XGS_RATE_DISCOUNT)) if apply_discount else float(rate)
+                    )
+            except ValueError:
+                logging.warning(
+                    f"⚠️ Skipped non-numeric rate '{rate}' in column '{col}' for {site}/{unit}/{commodity}"
+                )
+
+    logging.info("✅ Rate table loaded successfully.")
+    return rate_table
+
+
+def load_conversion_table(filepath: str) -> Dict:
+    df = pd.read_csv(filepath)
+    df.columns = df.columns.str.strip().str.lower()
+    df["conversion_code"] = df["conversion_code"].str.strip().str.upper()
+    logging.info("✅ Conversion table loaded successfully.")
+    return {
+        row["conversion_code"]: {
+            "commodity_group": row["commodity_group"].strip().upper(),
+            "uom": row["uom"].strip().upper(),
+            "lbs_per_uom": row["lbs_per_uom"]
+        }
+        for _, row in df.iterrows()
+    }
+
+
+def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: str) -> Tuple[Optional[float], Optional[str]]:
+
+    rates = load_rate_table_from_csv(RATES_CSV_PATH)
+    site, unit, commodity_group, freight_class = site.upper(
+    ), unit.upper(), commodity_group.upper(), freight_class.upper()
+    try:
+        if site not in rates:
+            return None, f"Site '{site}' not found in rates"
+        if unit not in rates[site]:
+            return None, f"Unit '{unit}' not available at site '{site}'"
+        if commodity_group not in rates[site][unit]:
+            return None, f"Commodity group '{commodity_group}' not found under {site}/{unit}"
+
+        rate = rates[site][unit][commodity_group].get(freight_class)
+        if rate is None:
+            available = list(rates[site][unit][commodity_group].keys())
+            return None, f"Class '{freight_class}' not in {site}/{unit}/{commodity_group}. Available: {available}"
+        return rate, None
+    except Exception as e:
+        return None, f"Rate lookup error: {str(e)}"
 
 
 def get_freight_class(quantity: float) -> str:
@@ -121,7 +199,13 @@ def normalize_uom(uom: str) -> str:
     return "SQFT" if uom == "SF" else "SQYD" if uom == "SY" else uom
 
 
+conversion_lookup = load_conversion_table(CONVERSION_CSV_PATH)
+print("✅ Loaded commodity groups from conversion table:", set(
+    [v["commodity_group"] for v in conversion_lookup.values()]))
+
+
 def convert_area_to_weight(quantity: float, conversion_code: str):
+
     code = conversion_code.strip().upper()
     if code not in conversion_lookup:
         raise ValueError(
@@ -137,29 +221,6 @@ def convert_area_to_weight(quantity: float, conversion_code: str):
 
     return lbs, normalized_uom, commodity_group, lbs_per_uom, uom_used
 
-
-def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: str) -> Tuple[Optional[float], Optional[str]]:
-    site, unit, commodity_group, freight_class = site.upper(
-    ), unit.upper(), commodity_group.upper(), freight_class.upper()
-    try:
-        if site not in rates:
-            return None, f"Site '{site}' not found in rates"
-        if unit not in rates[site]:
-            return None, f"Unit '{unit}' not available at site '{site}'"
-        if commodity_group not in rates[site][unit]:
-            return None, f"Commodity group '{commodity_group}' not found under {site}/{unit}"
-
-        rate = rates[site][unit][commodity_group].get(freight_class)
-        if rate is None:
-            available = list(rates[site][unit][commodity_group].keys())
-            return None, f"Class '{freight_class}' not in {site}/{unit}/{commodity_group}. Available: {available}"
-        return rate, None
-    except Exception as e:
-        return None, f"Rate lookup error: {str(e)}"
-
-
-# Renamed and streamlined standardization function only
-# ✅ Updated: Ensure 1CBL/1CPT rows using AREA method are processed without conversion lookup requirement
 
 def standardize_commodity(
     quantity: float,

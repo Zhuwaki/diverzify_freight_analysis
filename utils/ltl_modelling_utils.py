@@ -3,7 +3,7 @@
 import logging
 import pandas as pd
 import numpy as np
-from utils.freight_model_utils import (
+from utils.model_params_utils import (
     standardize_commodity,
     get_freight_class,
     get_freight_rate,
