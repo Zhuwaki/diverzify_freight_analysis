@@ -34,7 +34,7 @@ conversion_csv_path = "data/input/freight_model/conversion_table_standardized.cs
 
 
 @router.post("/clean")
-async def clean_raw_file(file: UploadFile = File(...)):
+async def prepare_raw_input_file(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         if file.filename.endswith(".csv"):
