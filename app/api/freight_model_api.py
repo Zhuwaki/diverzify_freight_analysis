@@ -47,10 +47,10 @@ async def estimate_batch(file: UploadFile = File(...)):
         # Step 2: Aggregate invoice-level freight costs
 
         df = estimate_invoice_freight(df)
-        df = calibrate_surcharge(df)
-        df = compute_market_rates(df)
-        df = compute_freight_and_rate_ratios(df)
-        df = flag_market_cost_outliers(df)
+        # df = calibrate_surcharge(df)
+        # df = compute_market_rates(df)
+        # df = compute_freight_and_rate_ratios(df)
+       # df = flag_market_cost_outliers(df)
         df = filter_valid_priority_lines(df)
 
         # Save output
