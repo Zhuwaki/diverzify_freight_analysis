@@ -4,6 +4,7 @@ import logging
 from typing import Dict
 
 XGS_RATE_DISCOUNT = 0.06
+FUEL_SURCHARGE = 1.0
 
 # === Constants for loader use ===
 class_breakpoints = [
@@ -21,7 +22,7 @@ def load_rate_table_from_csv(filepath: str, apply_discount: bool = True) -> Dict
     df.columns = [col.strip().lower() for col in df.columns]
 
     valid_class_cols = [c[0].lower() for c in class_breakpoints]
-    required_cols = ["siteid", "unit", "commodity_group"]
+    required_cols = ["site", "unit", "commodity_group"]
 
     for col in required_cols:
         if col not in df.columns:
@@ -30,7 +31,7 @@ def load_rate_table_from_csv(filepath: str, apply_discount: bool = True) -> Dict
     rate_table = {}
 
     for _, row in df.iterrows():
-        site = row["siteid"].strip().upper()
+        site = row["site"].strip().upper()
         unit = row["unit"].strip().upper()
         commodity = str(row["commodity_group"]).strip().upper()
 
@@ -46,7 +47,7 @@ def load_rate_table_from_csv(filepath: str, apply_discount: bool = True) -> Dict
                 if pd.notna(rate):
                     rate_table[site][unit][commodity][col.upper()] = (
                         float(
-                            rate) / (1 + XGS_RATE_DISCOUNT) if apply_discount else float(rate)
+                            rate)*(FUEL_SURCHARGE/(1 + XGS_RATE_DISCOUNT)) if apply_discount else float(rate)
                     )
             except ValueError:
                 logging.warning(
