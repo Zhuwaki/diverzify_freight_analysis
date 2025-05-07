@@ -413,7 +413,7 @@ def add_invoice_total(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def priority_product_composition(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("✅ increasing freight per invoice.")
+    logging.info("✅ Estimating priority product composition.")
 
     # Priority yes totals
     priority_yes_totals = df[
@@ -531,6 +531,7 @@ def resampling(df: pd.DataFrame):
 
 
 def filter_valid_invoices(mapped_df):
+    logging.info("✅ Filtering valid invoices.")
 
     # Apply the filters
     filtered_df = mapped_df[
@@ -544,8 +545,11 @@ def filter_valid_invoices(mapped_df):
 
 
 def filter_sample_invoices(mapped_df):
-    site_list = ['DIT', 'SPJ', 'SPN', 'SPT', 'SPW',
-                 'SPCP', 'SPHU', 'KUS', 'PVF', 'SPTM']
+    logging.info("✅ Filtering sample invoices.")
+    site_list = [
+        "DIT", "SPW", "SPN", "SPCP", "SPT",
+        "PVF", "SPHU", "SPTM", "FSU", "CTS", "SPJ",
+    ]
 
     # Apply the filters
     filtered_df = mapped_df[

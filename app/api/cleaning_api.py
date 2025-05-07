@@ -59,8 +59,8 @@ async def clean_raw_file(file: UploadFile = File(...)):
         df = add_freight_per_invoice(df)
         df = priority_product_composition(df)
         df = add_invoice_total(df)
-        df = filter_valid_invoices(df)
-       # df = filter_sample_invoices(df)
+       # df = filter_valid_invoices(df)
+        df = filter_sample_invoices(df)
 
         # First: Replace infinities
         df = df.replace([np.inf, -np.inf], np.nan)
