@@ -3,18 +3,16 @@ from utils.data_cleaning_utils import (
     map_manufacturer,
     map_commodity,
     create_conversion_code,
-    classify_invoice_priority_uom,
     classify_line_uom,
-    classify_invoice_priority_conversion,
     classify_freight_lines,
     classify_parts_and_commodities,
     classify_priority_products_2008,
     add_freight_per_invoice,
     priority_product_composition,
-    filter_valid_invoices,
+    add_invoice_total,
     classify_priority_commodities,
+    filter_valid_invoices,
     filter_sample_invoices,
-    add_invoice_total
 
 
 )
@@ -51,8 +49,6 @@ async def prepare_raw_input_file(file: UploadFile = File(...)):
         df = map_commodity(df)
         df = classify_line_uom(df)
         df = create_conversion_code(df)
-        # df = classify_invoice_priority_uom(df)
-        # df = classify_invoice_priority_conversion(df, conversion_csv_path)
         df = classify_freight_lines(df)
         df = classify_parts_and_commodities(df)
         df = classify_priority_commodities(df)

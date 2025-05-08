@@ -1,7 +1,7 @@
 # --- FastAPI Backend ---
 # File: api.py
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Literal
 import numpy as np
@@ -32,10 +32,22 @@ RATE_TIERS = [
     (40000, "40M")
 ]
 
+MAX_X_AXIS = {
+    "1VNL": 44000,  # LBS
+    "1CBL": 4400,   # SQYD
+    "1CPT": 4400    # SQYD
+}
+
+VALID_UOM = {
+    "1VNL": "LBS",
+    "1CBL": "SQYD",
+    "1CPT": "SQYD"
+}
+
 
 class FreightEstimateInput(BaseModel):
     site: str
-    commodity: Literal["1CBL", "1VNL"]
+    commodity: Literal["1CBL", "1VNL", "1CPT"]
     quantity: float
     uom: Literal["SQYD", "LBS"]
 
@@ -49,7 +61,7 @@ class FreightEstimateOutput(BaseModel):
     freight_class: str
 
 
-def build_ltl_curve(site: str, commodity: str, uom: str, qty: float, step: int = 10):
+def build_ltl_curve(site: str, commodity: str, uom: str, qty: float, step: int = 100):
     filtered = rates_df[
         (rates_df["site"] == site)
         & (rates_df["commodity_group"] == commodity)
@@ -67,12 +79,19 @@ def build_ltl_curve(site: str, commodity: str, uom: str, qty: float, step: int =
     for bound, col in RATE_TIERS:
         if col in row and not pd.isna(row[col]):
             rate = row[col]
-            for q in range(prev_bound + 1, bound + 1, step):
+            for q in range(prev_bound + step, bound + 1, step):
                 curve.append((q, q * rate))
                 if qty <= q and applied_rate == 0.0:
                     applied_rate = rate
                     applied_class = col
             prev_bound = bound
+
+    # Cap x-axis using commodity max
+    max_x = MAX_X_AXIS.get(commodity)
+    if max_x:
+        capped = [(q, c) for q, c in curve if q <= max_x]
+        if len(capped) >= 2:
+            curve = capped
 
     ftl_cost = float(row["FTL"]) if "FTL" in row and not pd.isna(
         row["FTL"]) else 0.0
@@ -90,7 +109,7 @@ def interpolate_cost(curve, qty):
     return float(np.interp(qty, x, y))
 
 
-def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost):
+def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost, max_x):
     fig, ax = plt.subplots()
     for mode, curve in curves.items():
         q, c = zip(*curve)
@@ -100,6 +119,7 @@ def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost):
         else:
             ax.plot(q, c, label=f"{mode} Cost Curve")
     ax.scatter(qty, user_cost, color='red', label="User Query", zorder=5)
+    ax.set_xlim(0, max_x)
     ax.set_xlabel("Quantity")
     ax.set_ylabel("Freight Cost")
     ax.legend()
@@ -114,14 +134,37 @@ def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost):
 @router.post("/estimate", response_model=FreightEstimateOutput)
 def estimate_freight(input: FreightEstimateInput):
     try:
-        ltl_curve, ltl_rate, freight_class, ftl_cost = build_ltl_curve(
-            input.site, input.commodity, input.uom, input.quantity, step=5)
+        # Validate UOM compatibility
+        expected_uom = VALID_UOM.get(input.commodity)
+        if expected_uom != input.uom:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid unit of measure for {input.commodity}. Expected: {expected_uom}"
+            )
+
+        # Attempt to build curve
+        try:
+            ltl_curve, ltl_rate, freight_class, ftl_cost = build_ltl_curve(
+                input.site, input.commodity, input.uom, input.quantity, step=100)
+        except ValueError as ve:
+            print(f"[ERROR] {ve}")
+            raise HTTPException(status_code=400, detail=str(ve))
+
+        # Ensure curve is not empty or invalid
+        if not ltl_curve or len(ltl_curve) < 2:
+            print("[ERROR] LTL curve has insufficient data points.")
+            raise HTTPException(
+                status_code=400, detail="Insufficient data to plot cost curve.")
+
         ltl_cost = interpolate_cost(ltl_curve, input.quantity)
         ftl_line = [(min(q for q, _ in ltl_curve), ftl_cost),
                     (max(q for q, _ in ltl_curve), ftl_cost)]
         optimal_mode = "FTL" if ftl_cost < ltl_cost else "LTL"
-        plot_b64 = generate_plot({"LTL": ltl_curve, "FTL": ftl_line}, input.quantity,
-                                 ltl_cost, ftl_cost, ltl_cost if optimal_mode == "LTL" else ftl_cost)
+        max_x = MAX_X_AXIS.get(input.commodity, max(q for q, _ in ltl_curve))
+        plot_b64 = generate_plot({"LTL": ltl_curve, "FTL": ftl_line},
+                                 input.quantity, ltl_cost, ftl_cost,
+                                 ltl_cost if optimal_mode == "LTL" else ftl_cost,
+                                 max_x)
 
         return FreightEstimateOutput(
             ltl_cost=ltl_cost,
@@ -131,13 +174,9 @@ def estimate_freight(input: FreightEstimateInput):
             ltl_rate=ltl_rate,
             freight_class=freight_class
         )
+
+    except HTTPException as he:
+        raise he
     except Exception as e:
         print(f"[ERROR] {e}")
-        return FreightEstimateOutput(
-            ltl_cost=0.0,
-            ftl_cost=0.0,
-            optimal_mode="Error",
-            plot_base64="",
-            ltl_rate=0.0,
-            freight_class=""
-        )
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -1,10 +1,7 @@
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime
 import numpy as np
-
-
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -506,79 +503,3 @@ def filter_sample_invoices(mapped_df):
     filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
 
     return filtered_df
-
-
-# BACK UP FUNCTIONS
-def classify_invoice_priority_uom(df):
-    """
-    Flags whether all priority commodity lines (1CBL/1CPT/1VNL) in each invoice are classified.
-    Adds:
-    - invoice_priority_classified: True if all relevant lines are classified, else False
-    """
-    logging.info("🔧 Running classify_invoice_priority_uom...")
-
-    # Only priority commodities considered
-    priority_commodities = ['1CBL', '1CPT', '1VNL']
-    priority_df = df[df['new_commodity_group'].isin(priority_commodities)]
-
-    # Group by invoice and check if all priority lines are classified
-    invoice_classification = priority_df.groupby(
-        'invoice_id')['is_classified'].all().reset_index()
-    invoice_classification.rename(
-        columns={'is_classified': 'invoice_priority_classified'}, inplace=True)
-
-    # Merge back into main dataframe
-    df = df.merge(invoice_classification, on='invoice_id', how='left')
-    df['all_invoice_priority_commodities'] = df['invoice_priority_classified'].fillna(
-        "NO_PRIORITY")
-
-    logging.info("✅ classify_invoice_priority_uom complete.")
-    return df
-
-
-def classify_invoice_priority_conversion(df, conversion_lookup):
-    """
-    Flags whether all priority commodity lines (1CBL/1CPT/1VNL) in each invoice can be converted.
-    - 1CBL and 1CPT: Automatically convertible (no lookup)
-    - 1VNL: Must have valid conversion_code in lookup
-    Adds:
-    - can_be_converted (at line level)
-    - invoice_priority_conversion_success (at invoice level)
-    """
-    logging.info("🔧 Running classify_invoice_priority_conversion...")
-
-    # Priority commodities
-    priority_commodities = ['1CBL', '1CPT', '1VNL']
-
-    # Step 1: Filter to priority commodities only
-    priority_df = df[df['new_commodity_group'].isin(
-        priority_commodities)].copy()
-
-    # Step 2: Line-level conversion feasibility
-    def check_conversion(row):
-        try:
-            group = row['new_commodity_group']
-            if group in ['1CBL', '1CPT']:
-                return True
-            elif group == '1VNL':
-                return row['conversion_code'] in conversion_lookup
-            else:
-                return False
-        except Exception as e:
-            print("⚠️ Row causing error:", row.to_dict())
-            raise e
-
-    priority_df['can_be_converted'] = priority_df.apply(
-        check_conversion, axis=1)
-
-    # Step 3: Invoice-level aggregation
-    invoice_conversion_status = priority_df.groupby(
-        'invoice_id')['can_be_converted'].all().reset_index()
-    invoice_conversion_status.rename(
-        columns={'can_be_converted': 'invoice_priority_conversion_success'}, inplace=True)
-
-    # Step 4: Merge back into main dataframe
-    df = df.merge(invoice_conversion_status, on='invoice_id', how='left')
-
-    logging.info("✅ classify_invoice_priority_conversion complete.")
-    return df

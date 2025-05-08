@@ -31,7 +31,12 @@ if st.button("Estimate Freight"):
     if response.status_code == 200:
         st.session_state.result = response.json()
     else:
-        st.error("Failed to get estimate")
+        try:
+            error_message = response.json().get("detail", "Unknown error")
+        except Exception:
+            error_message = "Failed to get estimate"
+        st.error(f"❌ Error: {error_message}")
+
 
 # Show results
 if "result" in st.session_state:
