@@ -402,7 +402,7 @@ def priority_product_composition(df: pd.DataFrame) -> pd.DataFrame:
 
     # Priority no totals
     priority_no_totals = df[
-        (df['account'] == 2008) & (df['priority'] == 'No')
+        (df['account'] == 2008) & (df['priority_commodity'] == 'No')
     ].groupby('invoice_id')['invoice_line_total'].sum().reset_index()
     priority_no_totals.rename(
         columns={'invoice_line_total': 'non_priority_product_total'}, inplace=True)
