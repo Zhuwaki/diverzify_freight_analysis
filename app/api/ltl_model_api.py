@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 
 
-from utils.invoice_freight_utils import (
+from utils.ltl_modelling_utils import (
     estimate_invoice_freight,
     calibrate_surcharge,
     compute_market_rates,
@@ -19,8 +19,8 @@ from utils.invoice_freight_utils import (
 router = APIRouter()
 
 
-@router.post("/freightmodel")
-async def estimate_batch(file: UploadFile = File(...)):
+@router.post("/ltlmodel")
+async def model_partial_truck_load(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         if file.filename.endswith(".csv"):
@@ -47,15 +47,15 @@ async def estimate_batch(file: UploadFile = File(...)):
         # Step 2: Aggregate invoice-level freight costs
 
         df = estimate_invoice_freight(df)
-        df = calibrate_surcharge(df)
-        df = compute_market_rates(df)
-        df = compute_freight_and_rate_ratios(df)
-        df = flag_market_cost_outliers(df)
+        # df = calibrate_surcharge(df)
+        # df = compute_market_rates(df)
+        # df = compute_freight_and_rate_ratios(df)
+       # df = flag_market_cost_outliers(df)
         df = filter_valid_priority_lines(df)
 
         # Save output
         os.makedirs("data/downloads", exist_ok=True)
-        filename = f"freight_model_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        filename = f"ltl_model_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         filepath = os.path.join("data/downloads", filename)
         df.to_csv(filepath, index=False)
 

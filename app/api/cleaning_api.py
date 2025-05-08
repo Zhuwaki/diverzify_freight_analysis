@@ -1,10 +1,10 @@
 from utils.data_cleaning_utils import (
 
-    map_commodity_and_manufacturer,
+    map_manufacturer,
+    map_commodity,
     create_conversion_code,
     classify_invoice_priority_uom,
     classify_line_uom,
-    invoice_uom_classification,
     classify_invoice_priority_conversion,
     classify_freight_lines,
     classify_parts_and_commodities,
@@ -33,8 +33,8 @@ router = APIRouter()
 conversion_csv_path = "data/input/freight_model/conversion_table_standardized.csv"
 
 
-@router.post("/clean")
-async def clean_raw_file(file: UploadFile = File(...)):
+@router.post("/clean_input_file")
+async def prepare_raw_input_file(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         if file.filename.endswith(".csv"):
@@ -47,11 +47,12 @@ async def clean_raw_file(file: UploadFile = File(...)):
         else:
             return {"error": "Unsupported file format"}
 
-        df = map_commodity_and_manufacturer(df)
+        df = map_manufacturer(df)
+        df = map_commodity(df)
         df = classify_line_uom(df)
         df = create_conversion_code(df)
-        df = classify_invoice_priority_uom(df)
-        df = classify_invoice_priority_conversion(df, conversion_csv_path)
+        # df = classify_invoice_priority_uom(df)
+        # df = classify_invoice_priority_conversion(df, conversion_csv_path)
         df = classify_freight_lines(df)
         df = classify_parts_and_commodities(df)
         df = classify_priority_commodities(df)
@@ -59,7 +60,7 @@ async def clean_raw_file(file: UploadFile = File(...)):
         df = add_freight_per_invoice(df)
         df = priority_product_composition(df)
         df = add_invoice_total(df)
-        df = filter_valid_invoices(df)
+     #   df = filter_valid_invoices(df)
        # df = filter_sample_invoices(df)
 
         # First: Replace infinities
@@ -72,9 +73,9 @@ async def clean_raw_file(file: UploadFile = File(...)):
             df[col] = df[col].astype(bool)
 
         # Save as CSV
-        os.makedirs("data/downloads", exist_ok=True)
+        os.makedirs("data/downloads/cleaning", exist_ok=True)
         filename = f"cleaned_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        filepath = os.path.join("data/downloads", filename)
+        filepath = os.path.join("data/downloads/cleaning", filename)
         df.to_csv(filepath, index=False)
         # Fill numeric columns NaN with 0
         numeric_cols = df.select_dtypes(
@@ -94,7 +95,7 @@ async def clean_raw_file(file: UploadFile = File(...)):
             print(
                 f"⚠️ Found {len(bad_rows)} bad rows before JSON serialization!")
             bad_rows.to_csv(
-                'data/downloads/bad_rows_before_json.csv', index=False)
+                'data/downloads/cleaning/bad_rows_before_json.csv', index=False)
         else:
             print("✅ No bad rows found before JSON serialization.")
 
@@ -122,7 +123,7 @@ async def clean_raw_file(file: UploadFile = File(...)):
         if bad_columns_summary:
             bad_columns_df = pd.DataFrame(bad_columns_summary)
             bad_columns_df.to_csv(
-                'data/downloads/bad_columns_summary.csv', index=False)
+                'data/downloads/cleaning/bad_columns_summary.csv', index=False)
             print("⚠️ Bad columns detected and exported.")
         else:
             print("✅ No bad columns detected.")

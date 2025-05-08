@@ -3,7 +3,7 @@
 import logging
 import pandas as pd
 import numpy as np
-from utils.freight_model_utils import (
+from utils.model_params_utils import (
     standardize_commodity,
     get_freight_class,
     get_freight_rate,
@@ -11,13 +11,9 @@ from utils.freight_model_utils import (
     minimum_charges,
 )
 
-APPLY_XGS_DISCOUNT = True     # Toggle 6% discount from XGS rates (model)
-APPLY_MARKET_DISCOUNT = True  # Toggle 30% discount from freight_price
-APPLY_MINIMUM_CHARGES = True  # Toggle minimum charges (model)
 
 # === Adjustable Discount Rates ===
-XGS_RATE_DISCOUNT = 0.06
-SURCHARGE_DISCOUNT = 0.30
+SURCHARGE_DISCOUNT = 0
 
 
 def standardize_input_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -253,7 +249,7 @@ def calibrate_surcharge(df: pd.DataFrame, column="freight_per_invoice") -> pd.Da
     """
     logging.info(
         f"✅ Applying market freight discount of {SURCHARGE_DISCOUNT*100:.0f}% to '{column}'...")
-    df['calibrated_market_freight_costs'] = df[column] / \
+    df['historical_market_freight_costs'] = df[column] / \
         (1 + SURCHARGE_DISCOUNT)
     return df
 
@@ -277,7 +273,7 @@ def compute_market_rates(df: pd.DataFrame) -> pd.DataFrame:
     # Avoid divide-by-zero
     df["market_rate"] = np.where(
         df["invoice_commodity_quantity"] > 0,
-        df["calibrated_market_freight_costs"] /
+        df["historical_market_freight_costs"] /
         df["invoice_commodity_quantity"],
         np.nan
     )
@@ -301,17 +297,17 @@ def compute_market_rates(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def flag_market_cost_outliers(df: pd.DataFrame) -> pd.DataFrame:
-    if "calibrated_market_freight_costs" not in df.columns:
+    if "historical_market_freight_costs" not in df.columns:
         raise ValueError(
             "Column 'est_market_freight_costs' is missing from the DataFrame.")
 
-    q1 = df["calibrated_market_freight_costs"].quantile(0.25)
-    q3 = df["calibrated_market_freight_costs"].quantile(0.75)
+    q1 = df["historical_market_freight_costs"].quantile(0.25)
+    q3 = df["historical_market_freight_costs"].quantile(0.75)
     iqr = q3 - q1
     lower_bound = q1 - 1.5 * iqr
     upper_bound = q3 + 1.5 * iqr
 
-    df["market_cost_outlier"] = df["calibrated_market_freight_costs"].apply(
+    df["market_cost_outlier"] = df["historical_market_freight_costs"].apply(
         lambda x: "LOW" if x < lower_bound else (
             "HIGH" if x > upper_bound else "NORMAL")
     )
@@ -349,16 +345,16 @@ def compute_freight_and_rate_ratios(df: pd.DataFrame) -> pd.DataFrame:
     - rate_ratio_normal = est_market_rate / est_normalised_xgs_rate
     """
     df["freight_ratio_raw"] = df.apply(
-        lambda row: row["calibrated_market_freight_costs"] /
+        lambda row: row["historical_market_freight_costs"] /
         row["raw_invoice_cost"]
-        if pd.notnull(row["calibrated_market_freight_costs"]) and pd.notnull(row["raw_invoice_cost"]) and row["raw_invoice_cost"] != 0 else None,
+        if pd.notnull(row["historical_market_freight_costs"]) and pd.notnull(row["raw_invoice_cost"]) and row["raw_invoice_cost"] != 0 else None,
         axis=1
     )
 
     df["freight_ratio_normal"] = df.apply(
-        lambda row: row["calibrated_market_freight_costs"] /
+        lambda row: row["historical_market_freight_costs"] /
         row["invoice_freight_commodity_cost"]
-        if pd.notnull(row["calibrated_market_freight_costs"]) and pd.notnull(row["invoice_freight_commodity_cost"]) and row["invoice_freight_commodity_cost"] != 0 else None,
+        if pd.notnull(row["historical_market_freight_costs"]) and pd.notnull(row["invoice_freight_commodity_cost"]) and row["invoice_freight_commodity_cost"] != 0 else None,
         axis=1
     )
 
