@@ -2,15 +2,16 @@ import streamlit as st
 import requests
 import base64
 
-# st.title("Freight Cost Estimator")
+st.title("Freight Cost Estimator")
 
 # Top-level layout: inputs and graph side-by-side
 left_col, right_col = st.columns([2, 3])
 
 # Top-level column pair for site + commodity
 col1, col2 = st.columns(2)
-site = col1.selectbox("Select Site", ["DIT", "SPN"])
-commodity = col2.selectbox("Select Commodity", ["1CBL", "1VNL"])
+site = col1.selectbox("Select Site", ["DIT", "SPW", "SPN", "SPCP", "SPT",
+                                      "PVF", "SPHU", "SPTM", "FSU", "CTS", "SPJ"])
+commodity = col2.selectbox("Select Commodity", ["1CBL", "1VNL", "1CPT"])
 
 # Top-level column pair for quantity + unit of measure
 col3, col4 = st.columns(2)

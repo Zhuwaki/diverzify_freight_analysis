@@ -46,10 +46,10 @@ class FreightEstimateOutput(BaseModel):
     optimal_mode: str
     plot_base64: str
     ltl_rate: float
-    freight_class: int
+    freight_class: str
 
 
-def build_ltl_curve(site: str, commodity: str, uom: str, qty: float):
+def build_ltl_curve(site: str, commodity: str, uom: str, qty: float, step: int = 10):
     filtered = rates_df[
         (rates_df["site"] == site)
         & (rates_df["commodity_group"] == commodity)
@@ -61,15 +61,22 @@ def build_ltl_curve(site: str, commodity: str, uom: str, qty: float):
     row = filtered.iloc[0]
     curve = []
     applied_rate = 0.0
+    applied_class = ""
+    prev_bound = 0
+
     for bound, col in RATE_TIERS:
         if col in row and not pd.isna(row[col]):
             rate = row[col]
-            cost = bound * rate
-            curve.append((bound, cost))
-            if qty <= bound and applied_rate == 0.0:
-                applied_rate = rate
+            for q in range(prev_bound + 1, bound + 1, step):
+                curve.append((q, q * rate))
+                if qty <= q and applied_rate == 0.0:
+                    applied_rate = rate
+                    applied_class = col
+            prev_bound = bound
 
-    return curve, applied_rate, int(row["freightclass"]), float(row["FTL"]) if "FTL" in row and not pd.isna(row["FTL"]) else 0.0
+    ftl_cost = float(row["FTL"]) if "FTL" in row and not pd.isna(
+        row["FTL"]) else 0.0
+    return curve, applied_rate, applied_class, ftl_cost
 
 
 def interpolate_cost(curve, qty):
@@ -85,7 +92,6 @@ def interpolate_cost(curve, qty):
 
 def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost):
     fig, ax = plt.subplots()
-
     for mode, curve in curves.items():
         q, c = zip(*curve)
         if mode == "FTL":
@@ -93,7 +99,6 @@ def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost):
                     linestyle="--", color="orange", linewidth=2)
         else:
             ax.plot(q, c, label=f"{mode} Cost Curve")
-
     ax.scatter(qty, user_cost, color='red', label="User Query", zorder=5)
     ax.set_xlabel("Quantity")
     ax.set_ylabel("Freight Cost")
@@ -110,12 +115,10 @@ def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost):
 def estimate_freight(input: FreightEstimateInput):
     try:
         ltl_curve, ltl_rate, freight_class, ftl_cost = build_ltl_curve(
-            input.site, input.commodity, input.uom, input.quantity)
+            input.site, input.commodity, input.uom, input.quantity, step=5)
         ltl_cost = interpolate_cost(ltl_curve, input.quantity)
-
         ftl_line = [(min(q for q, _ in ltl_curve), ftl_cost),
                     (max(q for q, _ in ltl_curve), ftl_cost)]
-
         optimal_mode = "FTL" if ftl_cost < ltl_cost else "LTL"
         plot_b64 = generate_plot({"LTL": ltl_curve, "FTL": ftl_line}, input.quantity,
                                  ltl_cost, ftl_cost, ltl_cost if optimal_mode == "LTL" else ftl_cost)
@@ -136,5 +139,5 @@ def estimate_freight(input: FreightEstimateInput):
             optimal_mode="Error",
             plot_base64="",
             ltl_rate=0.0,
-            freight_class=0
+            freight_class=""
         )
