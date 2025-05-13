@@ -27,7 +27,7 @@ async def model_full_truck_load(file: UploadFile = File(...)):
         df.columns = [col.strip().lower().replace(" ", "_")
                       for col in df.columns]
 
-        required_cols = ['invoice_commodity_quantity', 'new_commodity_group', 'rate', 'unit',
+        required_cols = ['invoice_commodity_quantity', 'new_commodity_group', 'applied_rate', 'unit',
                          'raw_invoice_cost', 'invoice_freight_commodity_cost', 'minimum_applied', 'site']
         missing_cols = [col for col in required_cols if col not in df.columns]
         if missing_cols:
@@ -37,9 +37,9 @@ async def model_full_truck_load(file: UploadFile = File(...)):
         df = simulate_freight_cost_models_revised(df)
 
         # Save output
-        os.makedirs("data/downloads", exist_ok=True)
+        os.makedirs("data/downloads/ftl", exist_ok=True)
         filename = f"ftl_model_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        filepath = os.path.join("data/downloads", filename)
+        filepath = os.path.join("data/downloads/ftl", filename)
         df.to_csv(filepath, index=False)
 
         return JSONResponse(content={
