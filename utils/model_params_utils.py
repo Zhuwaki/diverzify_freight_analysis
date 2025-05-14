@@ -178,13 +178,15 @@ def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: 
         inflation_rate = rate/(1+XGS_RATE_DISCOUNT)
         fsc_rate = inflation_rate * (1 + XGS_FUEL_SURCHARGE)
         xgs_rebate = fsc_rate * (XGS_LTL_REBATE)
-        star_net_rebate = fsc_rate * (STARNET_REBATE)
+        interim_rate = fsc_rate - xgs_rebate
+        star_net_rebate = interim_rate * (STARNET_REBATE)
         final_rate = fsc_rate - xgs_rebate - star_net_rebate
         return {
             "base_rate": rate,
             "inflation_rate": inflation_rate,
             "fsc_rate": fsc_rate,
             "xgs_rebate": xgs_rebate,
+            'fsc_xgs_rebate': interim_rate,
             "star_net_rebate": star_net_rebate,
             "final_rate": final_rate
         }, None

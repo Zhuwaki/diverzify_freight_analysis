@@ -161,6 +161,7 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
             inflation_rate = rate_details['inflation_rate']
             fsc_rate = rate_details['fsc_rate']
             xgs_rebate = rate_details['xgs_rebate']
+            intertim_rate = rate_details['fsc_xgs_rebate']
             star_net_rebate = rate_details['star_net_rebate']
             rate = rate_details['final_rate']
 
@@ -169,6 +170,7 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
                 inflation_rate /= 100
                 fsc_rate /= 100
                 xgs_rebate /= 100
+                intertim_rate /= 100
                 star_net_rebate /= 100
                 rate /= 100
 
@@ -188,6 +190,7 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
                 'base_rate': base_rate,
                 'inflation_rate': inflation_rate,
                 'fsc_rate': fsc_rate,
+                'intertim_rate': intertim_rate,
                 'xgs_rebate': xgs_rebate,
                 'star_net_rebate': star_net_rebate,
                 'applied_rate': rate,
