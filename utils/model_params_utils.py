@@ -5,7 +5,9 @@ from typing import Optional, Tuple, Dict
 
 
 XGS_RATE_DISCOUNT = 0.06
-FUEL_SURCHARGE = 1.0
+XGS_FUEL_SURCHARGE = 0.3
+XGS_LTL_REBATE = 0.1
+STARNET_REBATE = 0.025
 
 RATES_CSV_PATH = "data/input/freight_model/freight_rates_operating.csv"
 
@@ -128,8 +130,7 @@ def load_rate_table_from_csv(filepath: str, apply_discount: bool = True) -> Dict
             try:
                 if pd.notna(rate):
                     rate_table[site][unit][commodity][col.upper()] = (
-                        float(
-                            rate)*(FUEL_SURCHARGE/(1 + XGS_RATE_DISCOUNT)) if apply_discount else float(rate)
+                        float(rate)
                     )
             except ValueError:
                 logging.warning(
@@ -172,7 +173,23 @@ def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: 
         if rate is None:
             available = list(rates[site][unit][commodity_group].keys())
             return None, f"Class '{freight_class}' not in {site}/{unit}/{commodity_group}. Available: {available}"
-        return rate, None
+
+        # adjust rate for FSC and rebates
+        inflation_rate = rate/(1+XGS_RATE_DISCOUNT)
+        fsc_rate = inflation_rate * (1 + XGS_FUEL_SURCHARGE)
+        xgs_rebate = fsc_rate * (XGS_LTL_REBATE)
+        interim_rate = fsc_rate - xgs_rebate
+        star_net_rebate = interim_rate * (STARNET_REBATE)
+        final_rate = fsc_rate - xgs_rebate - star_net_rebate
+        return {
+            "base_rate": rate,
+            "inflation_rate": inflation_rate,
+            "fsc_rate": fsc_rate,
+            "xgs_rebate": xgs_rebate,
+            'fsc_xgs_rebate': interim_rate,
+            "star_net_rebate": star_net_rebate,
+            "final_rate": final_rate
+        }, None
     except Exception as e:
         return None, f"Rate lookup error: {str(e)}"
 

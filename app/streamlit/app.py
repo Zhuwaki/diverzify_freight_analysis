@@ -16,7 +16,7 @@ commodity = col2.selectbox("Select Commodity", ["1CBL", "1VNL", "1CPT"])
 # Top-level column pair for quantity + unit of measure
 col3, col4 = st.columns(2)
 quantity = col3.number_input("Enter Quantity", min_value=0.0, step=1.0)
-uom = col4.selectbox("Select Unit of Measure", ["SQYD", "LBS"])
+uom = col4.selectbox("Select Unit of Measure", ["SQYD", "CWT"])
 
 # Button and API call
 if st.button("Estimate Freight"):

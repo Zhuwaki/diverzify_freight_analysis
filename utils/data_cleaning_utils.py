@@ -487,7 +487,7 @@ def filter_valid_invoices(mapped_df):
 def filter_sample_invoices(mapped_df):
     logging.info("✅ Filtering sample invoices.")
     site_list = [
-        "DIT", "SPW", "SPN", "SPCP", "SPT",
+        "DIT",   "SPW", "SPN", "SPCP", "SPT",
         "PVF", "SPHU", "SPTM", "FSU", "CTS", "SPJ",
     ]
 
@@ -500,6 +500,6 @@ def filter_sample_invoices(mapped_df):
         (mapped_df['freight_per_invoice'] > 0) &
         (mapped_df['pct_priority_greater_than_70'] == True)
     ]
-    filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
+   # filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
 
     return filtered_df

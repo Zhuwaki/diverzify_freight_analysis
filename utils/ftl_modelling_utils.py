@@ -3,6 +3,10 @@
 import pandas as pd
 import numpy as np
 
+INFLATION = 1.06  # Inflation factor for cost adjustments
+XGS_FTL_REBATE = 0.2  # Rebate factor for FTL costs
+STARNET_REBATE = 0.025  # Rebate factor for Starnet costs
+
 
 def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -29,7 +33,7 @@ def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
     }
 
     required_cols = [
-        'invoice_commodity_quantity', 'new_commodity_group', 'rate', 'unit',
+        'invoice_commodity_quantity', 'new_commodity_group', 'applied_rate', 'unit',
         'raw_invoice_cost', 'invoice_freight_commodity_cost', 'minimum_applied', 'site'
     ]
     for col in required_cols:
@@ -43,10 +47,13 @@ def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     df['ftl_cost'] = df['site'].map(site_ftl_costs)
+    df['ftl_cost'] = df['ftl_cost']/INFLATION
+    df['ftl_cost'] = df['ftl_cost']*(1-XGS_FTL_REBATE)
+    df['ftl_cost'] = df['ftl_cost']*(1-STARNET_REBATE)
 
     def fallback_logic(row):
         threshold = vendor_thresholds.get(row['new_commodity_group'], np.inf)
-        if row['rate'] == 0:
+        if row['applied_rate'] == 0:
             if row['invoice_commodity_quantity'] >= threshold:
                 return row['ftl_cost']
             else:
