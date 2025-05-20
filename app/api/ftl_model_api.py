@@ -8,6 +8,10 @@ from datetime import datetime
 
 # Replace with your actual model import
 from utils.ftl_modelling_utils import simulate_freight_cost_models_revised
+from utils.hybrid_modelling_utils import apply_hybrid_freight_model
+from utils.realistic_optimal_utils import apply_realistic_optimal_model
+from utils.backup_utils import flag_outliers, compute_line_level_rate_ratio, compute_site_level_freight_ratio
+
 
 router = APIRouter()
 
@@ -35,6 +39,12 @@ async def model_full_truck_load(file: UploadFile = File(...)):
 
         # Run the FTL model logic
         df = simulate_freight_cost_models_revised(df)
+        df = apply_hybrid_freight_model(df)
+        df = apply_realistic_optimal_model(df)
+        df = compute_line_level_rate_ratio(df)
+        df = compute_site_level_freight_ratio(df)
+        df = flag_outliers(df, ['rate_ratio_normal', 'pct_difference'])
+       # df = evaluate_vendor_vs_physical_efficiency(df)
 
         # Save output
         os.makedirs("data/downloads/ftl", exist_ok=True)

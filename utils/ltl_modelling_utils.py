@@ -8,7 +8,6 @@ from utils.model_params_utils import (
     get_freight_class,
     get_freight_rate,
     classify_shipment_by_uom,
-    minimum_charges,
 )
 
 
@@ -164,6 +163,7 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
             intertim_rate = rate_details['fsc_xgs_rebate']
             star_net_rebate = rate_details['star_net_rebate']
             rate = rate_details['final_rate']
+            min_charge = rate_details.get('minimum_charge', 0)
 
             if method == 'CWT':
                 base_rate /= 100
@@ -176,7 +176,6 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
 
             shipment_type = classify_shipment_by_uom(qty, unit)
             raw_invoice_cost = round(rate * qty, 2)
-            min_charge = minimum_charges.get(site, {}).get(group, 0)
             if raw_invoice_cost < min_charge:
                 invoice_freight_commodity_cost = min_charge
                 minimum_applied = True
@@ -197,8 +196,7 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
                 'shipment_type': shipment_type,
                 'raw_invoice_cost': raw_invoice_cost,
                 'invoice_freight_commodity_cost': invoice_freight_commodity_cost,
-                'minimum_applied': minimum_applied,
-
+                'minimum_applied': minimum_applied
             })
 
         except Exception as e:
