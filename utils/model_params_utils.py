@@ -1,5 +1,6 @@
 # This module will contain only the loader utilities.
 import pandas as pd
+import numpy as np
 import logging
 from typing import Optional, Tuple, Dict
 
@@ -9,9 +10,9 @@ XGS_FUEL_SURCHARGE = 0.3
 XGS_LTL_REBATE = 0.1
 STARNET_REBATE = 0.025
 
-RATES_CSV_PATH = "data/input/freight_model/freight_rates_operating.csv"
+RATES_CSV_PATH = "data/input/freight_model/freight_rates_operating_multi.csv"
 
-CONVERSION_CSV_PATH = "data/input/freight_model/conversion_table_standardized.csv"
+CONVERSION_CSV_PATH = "data/input/freight_model/conversion_table_standardized_15052025_v2.csv"
 
 # === Constants ===
 class_breakpoints = [
@@ -28,65 +29,7 @@ discounts = {
     "SQYD": {"SPT": 1, "SPW": 1, "SPJ": 1, "DIT": 1, "SPN": 1, "SPCP": 1, "SPHU": 1, "PVF": 1, "SPTM": 1, 'CTS': 1, 'FSU': 1, },
 }
 
-# === Minimum freight charge per site ===
-minimum_charges = {
-    "SPT": {
-        '1CBL': 60.64,
-        '1VNL': 95.35,
-        '1CPT': 60.64
-    },
-    "SPW": {
-        '1CBL': 60.64,
-        '1VNL': 95.35,
-        '1CPT': 60.64
-    },
-    "SPJ": {
-        '1CBL': 55.13,
-        '1VNL': 95.35,
-        '1CPT': 55.13
-    },
-    "DIT": {
-        '1CBL': 52.59,
-        '1VNL': 115.21,
-        '1CPT': 52.59
-    },
-    "SPN": {
-        '1CBL': 49.19,
-        '1VNL': 95.35,
-        '1CPT': 49.19
-    },
-    "SPCP": {
-        '1CBL': 62.45,
-        '1VNL': 108.59,
-        '1CPT': 62.45
-    },
-    'SPHU': {
-        '1CBL': 62.45,
-        '1VNL': 101.96,
-        '1CPT': 62.45
-    },
-    'SPTM': {
-        '1CBL': 84.89,
-        '1VNL': 135.07,
-        '1CPT': 84.89
-    },
-    'PVF': {
-        '1CBL': 79.38,
-        '1VNL': 108.59,
-        '1CPT': 79.38
-    },
 
-    "CTS": {
-        '1CBL': 79.38,
-        '1VNL': 148.31,
-        '1CPT': 79.38
-    },
-    "FSU": {
-        '1CBL': 123.04,
-        '1VNL': 95.35,
-        '1CPT': 123.04
-    },
-}
 # === Loaders ===
 
 
@@ -123,19 +66,24 @@ def load_rate_table_from_csv(filepath: str, apply_discount: bool = True) -> Dict
             unit, {}).setdefault(commodity, {})
 
         for col in df.columns:
-            if col not in valid_class_cols:
-                continue
-
-            rate = row[col]
-            try:
-                if pd.notna(rate):
-                    rate_table[site][unit][commodity][col.upper()] = (
-                        float(rate)
+            if col in valid_class_cols:
+                rate = row[col]
+                try:
+                    if pd.notna(rate):
+                        rate_table[site][unit][commodity][col.upper()
+                                                          ] = float(rate)
+                except ValueError:
+                    logging.warning(
+                        f"⚠️ Skipped non-numeric rate '{rate}' in column '{col}' for {site}/{unit}/{commodity}"
                     )
-            except ValueError:
-                logging.warning(
-                    f"⚠️ Skipped non-numeric rate '{rate}' in column '{col}' for {site}/{unit}/{commodity}"
-                )
+
+        # Load minimum_charge and ftl_flat_rate into metadata
+        rate_table[site][unit][commodity]['__meta__'] = {
+            'minimum_charge': row.get('minimum_charge', np.nan),
+            'ftl_flat_rate': row.get('ftl_flat_rate', np.nan),
+            'old_discount': row.get('old_discount', np.nan),
+            'new_discount': row.get('new_discount', np.nan),
+        }
 
     logging.info("✅ Rate table loaded successfully.")
     return rate_table
@@ -170,17 +118,27 @@ def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: 
             return None, f"Commodity group '{commodity_group}' not found under {site}/{unit}"
 
         rate = rates[site][unit][commodity_group].get(freight_class)
+        meta = rates[site][unit][commodity_group].get('__meta__', {})
+
         if rate is None:
             available = list(rates[site][unit][commodity_group].keys())
             return None, f"Class '{freight_class}' not in {site}/{unit}/{commodity_group}. Available: {available}"
 
+        # ✅ New Vinyl-specific logic
+        if commodity_group == '1VNL':
+            old_disc = meta.get('old_discount')
+            new_disc = meta.get('new_discount')
+            if old_disc is not None and new_disc is not None:
+                rate = (rate / (1 - old_disc)) * (1 - new_disc)
+
         # adjust rate for FSC and rebates
-        inflation_rate = rate/(1+XGS_RATE_DISCOUNT)
+        inflation_rate = rate / (1 + XGS_RATE_DISCOUNT)
         fsc_rate = inflation_rate * (1 + XGS_FUEL_SURCHARGE)
-        xgs_rebate = fsc_rate * (XGS_LTL_REBATE)
+        xgs_rebate = inflation_rate * (XGS_LTL_REBATE)
         interim_rate = fsc_rate - xgs_rebate
-        star_net_rebate = interim_rate * (STARNET_REBATE)
+        star_net_rebate = (inflation_rate - xgs_rebate) * (STARNET_REBATE)
         final_rate = fsc_rate - xgs_rebate - star_net_rebate
+
         return {
             "base_rate": rate,
             "inflation_rate": inflation_rate,
@@ -188,8 +146,11 @@ def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: 
             "xgs_rebate": xgs_rebate,
             'fsc_xgs_rebate': interim_rate,
             "star_net_rebate": star_net_rebate,
-            "final_rate": final_rate
+            "final_rate": final_rate,
+            "minimum_charge": meta.get("minimum_charge", None),
+            "ftl_flat_rate": meta.get("ftl_flat_rate", None)
         }, None
+
     except Exception as e:
         return None, f"Rate lookup error: {str(e)}"
 

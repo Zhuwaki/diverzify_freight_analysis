@@ -486,9 +486,12 @@ def filter_valid_invoices(mapped_df):
 
 def filter_sample_invoices(mapped_df):
     logging.info("✅ Filtering sample invoices.")
+
     site_list = [
-        "DIT",   "SPW", "SPN", "SPCP", "SPT",
-        "PVF", "SPHU", "SPTM", "FSU", "CTS", "SPJ",
+        "BSC", "CTS", "DCN", "DIN", "DIT", "DPW", "DSL", "FSC", "FSG", "FSU",
+        "KFC", "PSC", "PSLV", "PSP", "PSS", "PSUC", "PVF", "RDW", "SPA", "SPB",
+        "SPC", "SPCP", "SPHU", "SPHV", "SPJ", "SPK", "SPLA", "SPLV", "SPN", "SPP",
+        "SPS", "SPSA", "SPT", "SPTG", "SPTM", "SPW", "SPWV"
     ]
 
     # Apply the filters
