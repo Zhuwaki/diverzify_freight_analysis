@@ -145,7 +145,8 @@ def find_intersection(curve, flat_y):
 def generate_plot(
     curves, qty, ltl_cost, ftl_cost, user_cost, max_x,
     rate_breaks, commodity,
-    intersection=None, vendor_intersection=None, truck_intersection=None, min_charge=None, min_charge_intersection=None
+    intersection=None, vendor_intersection=None, truck_intersection=None,
+    min_charge=None, min_charge_intersection=None
 ):
     logging.info("Generating plot")
     fig, ax = plt.subplots(facecolor='white')
@@ -153,108 +154,81 @@ def generate_plot(
     # Plot LTL and FTL curves
     for mode, curve in curves.items():
         q, c = zip(*curve)
-        if mode == "FTL":
-            ax.plot(q, c, label=f"{mode} Cost Curve",
-                    linestyle="--", color="orange", linewidth=2)
-        else:
-            ax.plot(q, c, label=f"{mode} Cost Curve")
+        ax.plot(q, c, label=f"{mode} Cost Curve",
+                linestyle="--" if mode == "FTL" else "-",
+                color="orange" if mode == "FTL" else "steelblue",
+                linewidth=2)
 
     # Plot rate break lines
     for x in rate_breaks:
         ax.axvline(x=x, linestyle=":", color="gray", alpha=0.4)
 
     # Threshold lines
-    truck_cap = TRUCK_CAPACITY.get(commodity)
     vendor_threshold = FTL_VENDOR_THRESHOLD.get(commodity)
-
-    if truck_cap:
-        ax.axvline(x=truck_cap, linestyle='--', color='blue',
-                   alpha=0.6, label='Truck Capacity')
-
+    truck_cap = TRUCK_CAPACITY.get(commodity)
     if vendor_threshold:
         ax.axvline(x=vendor_threshold, linestyle='--',
-                   color='black', alpha=0.6, label='Vendor Threshold')
+                   color='black', alpha=0.6)
+    if truck_cap:
+        ax.axvline(x=truck_cap, linestyle='--', color='blue', alpha=0.6)
 
-    # Intersection: LTL = FTL
+    # 📌 Draw plot before calling get_ylim (fix for Streamlit rendering)
+    plt.draw()
+    y_top = ax.get_ylim()[1] * 0.95
+
+    # Shade and label zones
+    if intersection and truck_cap:
+        x_int, _ = intersection
+
+    # LTL = FTL intersection point
     if intersection:
         x_int, y_int = intersection
-        ax.scatter(x_int, y_int, color='purple', s=60, label='LTL = FTL')
-        ax.annotate(f"LTL=FTL({int(x_int)}, ${int(y_int)})",
-                    xy=(x_int, y_int),
-                    xytext=(5, 5),
-                    textcoords="offset points",
-                    fontsize=8, color='purple', ha='left', va='center', bbox=dict(boxstyle="round,pad=0.4", facecolor="white", edgecolor="purple", alpha=0.8))
-
-        # 🔸 Vertical purple line at LTL = FTL intersection
+        ax.scatter(x_int, y_int, color='purple', s=60)
+        ax.annotate(f"({int(x_int)}, ${int(y_int)})", xy=(x_int, y_int), xytext=(5, 5),
+                    textcoords="offset points", fontsize=8, color='purple', ha='left', va='center',
+                    bbox=dict(boxstyle="round,pad=0.4", facecolor="white", edgecolor="purple", alpha=0.8))
         ax.axvline(x=x_int, linestyle='-', color='purple',
                    alpha=0.6, linewidth=1.5)
+        # Use LTL zone: from 0 to LTL=FTL intersection
+        ax.axvspan(0, x_int, color='skyblue', alpha=0.15)
+        ax.text(x_int / 2, y_top, "Use LTL",
+                ha='center', va='top', fontsize=10)
 
-    # Intersection: Vendor on LTL
+        # Use FTL zone: from intersection to max_x
+        ax.axvspan(x_int, max_x, color='navajowhite', alpha=0.15)
+        ax.text((x_int + max_x) / 2, y_top, "Use FTL",
+                ha='center', va='top', fontsize=10)
+
+    # Vendor and truck intersections
     if vendor_intersection:
         vx, vy = vendor_intersection
         ax.scatter(vx, vy, color='none', s=60)
-        # ax.annotate(f"\n({int(vx)}, ${int(vy)})",
-        #             xy=(vx, vy),
-        #             xytext=(10, -20),
-        #             textcoords="offset points",
-        #             fontsize=8, color='blue', ha='left')
-
-    # Intersection: Truck cap on LTL
     if truck_intersection:
         tx, ty = truck_intersection
         ax.scatter(tx, ty, color='none', s=60)
-        # ax.annotate(f"\n({int(tx)}, ${int(ty)})",
-        #             xy=(tx, ty),
-        #             xytext=(10, -40),
-        #             textcoords="offset points",
-        #             fontsize=8, color='green', ha='left')
 
-    # Intersections with FTL line
-    ftl_y = ftl_cost
-    if vendor_threshold:
-        ax.scatter(vendor_threshold, ftl_y, color='none', s=60, zorder=6)
-        # ax.annotate(f"\n({int(vendor_threshold)}, ${int(ftl_y)})",
-        #             xy=(vendor_threshold, ftl_y),
-        #             xytext=(10, -35),
-        #             textcoords="offset points",
-        #             fontsize=8, color='blue', ha='left')
-
-    if truck_cap:
-        ax.scatter(truck_cap, ftl_y, color='none', s=60, zorder=6)
-        # ax.annotate(f"\n({int(truck_cap)}, ${int(ftl_y)})",
-        #             xy=(truck_cap, ftl_y),
-        #             xytext=(10, -55),
-        #             textcoords="offset points",
-        #             fontsize=8, color='green', ha='left')
-
+    # Minimum charge line and label
     if min_charge:
         ax.axhline(y=min_charge, linestyle='--', color='brown', alpha=0.6)
-        ax.annotate(f"Minimum Charge (${int(min_charge)})",
-                    xy=(max_x * 0.98, min_charge),
-                    xytext=(-5, 5),
-                    textcoords="offset points",
-                    fontsize=8, color='brown', ha='right',
+        ax.annotate(f"Minimum Charge (${int(min_charge)})", xy=(max_x * 0.98, min_charge), xytext=(-5, 5),
+                    textcoords="offset points", fontsize=8, color='brown', ha='right',
                     bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="brown", alpha=0.8))
 
-    # Minimum charge point on LTL
+    # Minimum charge intersection
     if min_charge_intersection:
         mx, my = min_charge_intersection
-        ax.scatter(mx, my, color='brown', s=60, zorder=6)
-        ax.annotate(f"({int(mx)}, ${int(my)})",
-                    xy=(mx, my),
-                    xytext=(5, -10),
-                    textcoords="offset points",
-                    fontsize=8, color='brown',
-                    ha='left', va='center',
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="brown", alpha=0.8))
+       # ax.scatter(mx, my, color='brown', s=60)
+        # ax.annotate(f"({int(mx)}, ${int(my)})", xy=(mx, my), xytext=(5, -10),
+        #             textcoords="offset points", fontsize=8, color='brown',
+        #             ha='left', va='center',
+        #             bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="brown", alpha=0.8))
 
     # User query point
-    ax.scatter(qty, user_cost, color='none', label="User Query", zorder=5)
+    ax.scatter(qty, user_cost, color='none', zorder=5)
 
     ax.set_xlim(0, max_x)
-    ax.set_xlabel("Quantity")
-    ax.set_ylabel("Freight Cost")
-    # ax.legend()
+    ax.set_xlabel("Quantity", )
+    ax.set_ylabel("Freight Cost", )
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
