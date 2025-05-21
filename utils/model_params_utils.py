@@ -12,7 +12,7 @@ STARNET_REBATE = 0.025
 
 RATES_CSV_PATH = "data/input/freight_model/freight_rates_operating_multi.csv"
 
-CONVERSION_CSV_PATH = "data/input/freight_model/conversion_table_standardized_15052025_v2.csv"
+CONVERSION_CSV_PATH = "data/input/freight_model/conversion_table_standardized_operating.csv"
 
 # === Constants ===
 class_breakpoints = [
