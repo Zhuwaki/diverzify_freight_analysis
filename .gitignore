@@ -13,3 +13,4 @@ app/freight_api.log
 /downloads
 /utils/__pycache__
 
+/notebooks/nigel/freight_output

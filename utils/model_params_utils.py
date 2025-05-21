@@ -124,12 +124,25 @@ def get_freight_rate(site: str, unit: str, commodity_group: str, freight_class: 
             available = list(rates[site][unit][commodity_group].keys())
             return None, f"Class '{freight_class}' not in {site}/{unit}/{commodity_group}. Available: {available}"
 
-        # ✅ New Vinyl-specific logic
+       # ✅ New Vinyl-specific logic (supports multiple methods)
+        # ✅ New Vinyl-specific logic (supports multiple methods)
         if commodity_group == '1VNL':
+            discount_mode = meta.get(
+                'discount_mode', 'estimate')  # Default to accurate
             old_disc = meta.get('old_discount')
             new_disc = meta.get('new_discount')
-            if old_disc is not None and new_disc is not None:
+
+            if discount_mode == 'accurate' and old_disc is not None and new_disc is not None:
+                original_rate = rate
                 rate = (rate / (1 - old_disc)) * (1 - new_disc)
+                logging.info(
+                    f"🎯 Applied ACCURATE discount method for 1VNL at {site}/{freight_class}: {original_rate:.4f} → {rate:.4f}")
+
+            elif discount_mode == 'estimate':
+                original_rate = rate
+                rate *= 0.9
+                logging.info(
+                    f"⚡ Applied QUICK_DIRTY discount method for 1VNL at {site}/{freight_class}: {original_rate:.4f} → {rate:.4f}")
 
         # adjust rate for FSC and rebates
         inflation_rate = rate / (1 + XGS_RATE_DISCOUNT)

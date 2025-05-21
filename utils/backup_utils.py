@@ -25,42 +25,40 @@ def flag_outliers(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
 
 def compute_line_level_rate_ratio(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Computes:
-    - rate_ratio_normal: Normalized comparison of modelled vs. actual unit rate
-    - pct_difference: Percentage savings or overspend at the invoice level
-    - savings_flag: "SAVINGS" if model is cheaper, "LOSS" if model is more expensive
+    Computes the line-level rate ratio by normalizing both modelled and actual costs
+    by quantity to compare per-unit rates.
+
+    Adds:
+    - xgs_rate: per-unit cost based on modelled (realistic_optimal_cost)
+    - historical_rate: per-unit cost based on actual (freight_per_invoice)
+    - rate_ratio_normal: xgs_rate / historical_rate
+    - pct_difference: % difference from actual to modelled
+    - savings_flag: 'SAVINGS' if modelled < actual, else 'LOSS'
     """
-    required_cols = {"realistic_optimal_cost",
-                     "freight_per_invoice", "invoice_commodity_quantity"}
-    if not required_cols.issubset(df.columns):
-        raise ValueError(
-            f"Missing required columns: {required_cols - set(df.columns)}")
+    df = df.copy()
 
-    # Rate ratio (normalized per unit)
-    df["rate_ratio_normal"] = df.apply(
-        lambda row: (row["realistic_optimal_cost"] / row["invoice_commodity_quantity"]) /
-                    (row["freight_per_invoice"] /
-                     row["invoice_commodity_quantity"])
-        if all(pd.notnull([row["realistic_optimal_cost"], row["freight_per_invoice"], row["invoice_commodity_quantity"]])
-               ) and row["freight_per_invoice"] != 0 and row["invoice_commodity_quantity"] != 0
-        else None,
-        axis=1
-    )
+    required_cols = {
+        "realistic_optimal_cost",
+        "freight_per_invoice",
+        "invoice_commodity_quantity"
+    }
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns: {missing}")
 
-    # % Difference (actual - modelled) / actual
-    df["pct_difference"] = df.apply(
-        lambda row: ((row["freight_per_invoice"] -
-                     row["realistic_optimal_cost"]) / row["freight_per_invoice"])
-        if pd.notnull(row["realistic_optimal_cost"]) and pd.notnull(row["freight_per_invoice"]) and row["freight_per_invoice"] != 0
-        else None,
-        axis=1
-    )
+    # Avoid divide-by-zero
+    df["invoice_commodity_quantity"] = df["invoice_commodity_quantity"].replace(
+        0, pd.NA)
 
-    # Flag: "SAVINGS" if model is cheaper, "LOSS" if model is more expensive
+    df["xgs_rate"] = df["realistic_optimal_cost"] / \
+        df["invoice_commodity_quantity"]
+    df["historical_rate"] = df["freight_per_invoice"] / \
+        df["invoice_commodity_quantity"]
+    df["rate_ratio_normal"] = df["xgs_rate"] / df["historical_rate"]
+    df["pct_difference"] = (
+        (df["historical_rate"] - df["xgs_rate"]) / df["historical_rate"]) * 100
     df["savings_flag"] = df["pct_difference"].apply(
-        lambda x: "SAVINGS" if x is not None and x > 0 else (
-            "LOSS" if x is not None and x < 0 else None)
-    )
+        lambda x: "SAVINGS" if x > 0 else "LOSS")
 
     return df
 
@@ -92,3 +90,87 @@ def compute_site_level_freight_ratio(df: pd.DataFrame) -> pd.DataFrame:
         ratio_df[["site", "freight_ratio_normal_site"]], on="site", how="left")
 
     return df
+
+
+def append_group_stats_to_df(df: pd.DataFrame, value_columns: list) -> pd.DataFrame:
+    """
+    Computes mean, median, mode(s), and average for specified columns grouped by
+    ['site', 'new_commodity_group'] and appends them back to the original DataFrame.
+
+    Parameters:
+        df (pd.DataFrame): Input DataFrame with 'site' and 'new_commodity_group'
+        value_columns (list): List of numeric columns to summarize
+
+    Returns:
+        pd.DataFrame: Original DataFrame with additional columns per stat
+    """
+    df = df.copy()
+
+    # Group and compute stats
+    stats = df.groupby(['site', 'new_commodity_group'])[value_columns].agg(
+        ['mean', 'median', lambda x: x.mode().tolist(), 'sum', 'count']
+    )
+
+    # Rename lambda-generated column for mode
+    stats.columns = ['_'.join(
+        [col[0], col[1] if col[1] != '<lambda>' else 'mode']) for col in stats.columns]
+
+    # Compute average = sum / count
+    for col in value_columns:
+        stats[f"{col}_average"] = stats[f"{col}_sum"] / stats[f"{col}_count"]
+
+    # Drop raw sum and count if not needed
+    stats = stats.drop(columns=[
+                       f"{col}_sum" for col in value_columns] + [f"{col}_count" for col in value_columns])
+
+    # Reset index and merge back to original DataFrame
+    stats = stats.reset_index()
+    merged_df = df.merge(stats, on=['site', 'new_commodity_group'], how='left')
+
+    return merged_df
+
+
+def export_site_commodity_range_summary(
+    df: pd.DataFrame,
+    value_columns: list,
+    output_path: str,
+    output_format: str = "csv"
+) -> pd.DataFrame:
+    """
+    Generates summary stats (min, mean, median, mode, max) for each value column
+    grouped by site and new_commodity_group, and saves to file.
+
+    Parameters:
+        df (pd.DataFrame): Input data
+        value_columns (list): List of columns to compute stats for
+        output_path (str): Full path to output file (e.g., 'summary.csv')
+        output_format (str): 'csv' or 'excel'
+
+    Returns:
+        pd.DataFrame: Summary table as shown in example
+    """
+    df = df.copy()
+
+    grouped = df.groupby(['site', 'new_commodity_group'])[value_columns]
+
+    # Compute all necessary statistics
+    stats_df = grouped.agg(['min', 'mean', 'median', lambda x: x.mode(
+    ).iloc[0] if not x.mode().empty else None, 'max'])
+
+    # Flatten MultiIndex columns
+    stats_df.columns = [
+        f"{stat} of {col}" if stat != "<lambda>" else f"Mode of {col}"
+        for col, stat in stats_df.columns
+    ]
+
+    stats_df = stats_df.reset_index()
+
+    # Save to file
+    if output_format == "csv":
+        stats_df.to_csv(output_path, index=False)
+    elif output_format == "excel":
+        stats_df.to_excel(output_path, index=False)
+    else:
+        raise ValueError("Invalid output_format. Use 'csv' or 'excel'.")
+
+    return stats_df
