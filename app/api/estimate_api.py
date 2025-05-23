@@ -18,7 +18,7 @@ router = APIRouter()
 
 # Load freight rate table once
 RATE_PATH = os.path.join(os.path.dirname(
-    __file__), "freight_rates_operating.csv")
+    __file__), "freight_rates_operating_multi.csv")
 rates_df = pd.read_csv(RATE_PATH)
 rates_df.columns = rates_df.columns.str.strip()
 
@@ -28,15 +28,16 @@ RATE_TIERS = [
 ]
 
 MAX_X_AXIS = {
-    "1VNL": 44000,
-    "1CBL": 10000,
-    "1CPT": 10000
+    "1VNL": 40000,
+    "1CBL": 10500,
+    "1CPT": 6500
 }
 
 TRUCK_CAPACITY = {
-    "1CBL": 4000,
-    "1CPT": 3500,
-    "1VNL": 40000
+    "1VNL": 39000,
+    "1CBL": 10000,
+    "1CPT": 6000,
+
 }
 
 FTL_VENDOR_THRESHOLD = {
@@ -103,9 +104,13 @@ def build_ltl_curve(site: str, commodity: str, uom: str, qty: float, step: int =
             curve = capped
         rate_breaks = [b for b in rate_breaks if b <= max_x]
 
-    ftl_cost = float(row["FTL"]) if "FTL" in row and not pd.isna(
-        row["FTL"]) else 0.0
-    return curve, applied_rate, applied_class, ftl_cost, rate_breaks
+    ftl_cost = float(row["ftl_flat_rate"]) if "ftl_flat_rate" in row and not pd.isna(
+        row["ftl_flat_rate"]) else 0.0
+
+    min_charge = float(row["minimum_charge"]) if "minimum_charge" in row and not pd.isna(
+        row["minimum_charge"]) else None
+
+    return curve, applied_rate, applied_class, ftl_cost, rate_breaks, min_charge
 
 
 def interpolate_cost(curve, qty):
@@ -137,63 +142,94 @@ def find_intersection(curve, flat_y):
 
 # Update only generate_plot with offset annotation labels
 
-def generate_plot(curves, qty, ltl_cost, ftl_cost, user_cost, max_x, rate_breaks, commodity, intersection=None, vendor_intersection=None, truck_intersection=None):
+def generate_plot(
+    curves, qty, ltl_cost, ftl_cost, user_cost, max_x,
+    rate_breaks, commodity,
+    intersection=None, vendor_intersection=None, truck_intersection=None,
+    min_charge=None, min_charge_intersection=None
+):
     logging.info("Generating plot")
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(facecolor='white')
+
+    # Plot LTL and FTL curves
     for mode, curve in curves.items():
         q, c = zip(*curve)
-        if mode == "FTL":
-            ax.plot(q, c, label=f"{mode} Cost Curve",
-                    linestyle="--", color="orange", linewidth=2)
-        else:
-            ax.plot(q, c, label=f"{mode} Cost Curve")
+        ax.plot(q, c, label=f"{mode} Cost Curve",
+                linestyle="--" if mode == "FTL" else "-",
+                color="orange" if mode == "FTL" else "steelblue",
+                linewidth=2)
 
+    # Plot rate break lines
     for x in rate_breaks:
         ax.axvline(x=x, linestyle=":", color="gray", alpha=0.4)
 
-    truck_cap = TRUCK_CAPACITY.get(commodity)
+    # Threshold lines
     vendor_threshold = FTL_VENDOR_THRESHOLD.get(commodity)
-
-    if truck_cap:
-        ax.axvline(x=truck_cap, linestyle='--', color='red',
-                   alpha=0.6, label='Truck Capacity')
+    truck_cap = TRUCK_CAPACITY.get(commodity)
     if vendor_threshold:
-        ax.axvline(x=vendor_threshold, linestyle='--', color='blue',
-                   alpha=0.6, label='Vendor Threshold')
+        ax.axvline(x=vendor_threshold, linestyle='--',
+                   color='black', alpha=0.6)
+    if truck_cap:
+        ax.axvline(x=truck_cap, linestyle='--', color='blue', alpha=0.6)
 
+    # 📌 Draw plot before calling get_ylim (fix for Streamlit rendering)
+    plt.draw()
+    y_top = ax.get_ylim()[1] * 0.95
+
+    # Shade and label zones
+    if intersection and truck_cap:
+        x_int, _ = intersection
+
+    # LTL = FTL intersection point
     if intersection:
         x_int, y_int = intersection
-        ax.scatter(x_int, y_int, color='purple', s=60, label='LTL = FTL')
-        ax.annotate(f"LTL = FTL\n({int(x_int)}, ${int(y_int)})",
-                    xy=(x_int, y_int),
-                    xytext=(10, 10),
-                    textcoords="offset points",
-                    fontsize=8, color='purple', ha='left')
+        ax.scatter(x_int, y_int, color='purple', s=60)
+        ax.annotate(f"({int(x_int)}, ${int(y_int)})", xy=(x_int, y_int), xytext=(5, 5),
+                    textcoords="offset points", fontsize=8, color='purple', ha='left', va='center',
+                    bbox=dict(boxstyle="round,pad=0.4", facecolor="white", edgecolor="purple", alpha=0.8))
+        ax.axvline(x=x_int, linestyle='-', color='purple',
+                   alpha=0.6, linewidth=1.5)
+        # Use LTL zone: from 0 to LTL=FTL intersection
+        ax.axvspan(0, x_int, color='skyblue', alpha=0.15)
+        ax.text(x_int / 2, y_top, "Use LTL",
+                ha='center', va='top', fontsize=10)
 
+        # Use FTL zone: from intersection to max_x
+        ax.axvspan(x_int, max_x, color='navajowhite', alpha=0.15)
+        ax.text((x_int + max_x) / 2, y_top, "Use FTL",
+                ha='center', va='top', fontsize=10)
+
+    # Vendor and truck intersections
     if vendor_intersection:
         vx, vy = vendor_intersection
-        ax.scatter(vx, vy, color='blue', s=60)
-        ax.annotate(f"Vendor Threshold\n({int(vx)}, ${int(vy)})",
-                    xy=(vx, vy),
-                    xytext=(10, -20),
-                    textcoords="offset points",
-                    fontsize=8, color='blue', ha='left')
-
+        ax.scatter(vx, vy, color='none', s=60)
     if truck_intersection:
         tx, ty = truck_intersection
-        ax.scatter(tx, ty, color='green', s=60)
-        ax.annotate(f"Truck Capacity\n({int(tx)}, ${int(ty)})",
-                    xy=(tx, ty),
-                    xytext=(10, -40),
-                    textcoords="offset points",
-                    fontsize=8, color='green', ha='left')
+        ax.scatter(tx, ty, color='none', s=60)
 
-    ax.scatter(qty, user_cost, color='red', label="User Query", zorder=5)
+    # Minimum charge line and label
+    if min_charge:
+        ax.axhline(y=min_charge, linestyle='--', color='brown', alpha=0.6)
+        ax.annotate(f"Minimum Charge (${int(min_charge)})", xy=(max_x * 0.98, min_charge), xytext=(-5, 5),
+                    textcoords="offset points", fontsize=8, color='brown', ha='right',
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="brown", alpha=0.8))
+
+    # Minimum charge intersection
+    if min_charge_intersection:
+        mx, my = min_charge_intersection
+       # ax.scatter(mx, my, color='brown', s=60)
+        # ax.annotate(f"({int(mx)}, ${int(my)})", xy=(mx, my), xytext=(5, -10),
+        #             textcoords="offset points", fontsize=8, color='brown',
+        #             ha='left', va='center',
+        #             bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="brown", alpha=0.8))
+
+    # User query point
+    ax.scatter(qty, user_cost, color='none', zorder=5)
+
     ax.set_xlim(0, max_x)
-    ax.set_xlabel("Quantity")
-    ax.set_ylabel("Freight Cost")
-    ax.set_title("Freight Cost Curves")
-    ax.legend()
+    ax.set_xlabel("Quantity", )
+    ax.set_ylabel("Freight Cost", )
+
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
     plt.close(fig)
@@ -211,7 +247,7 @@ def estimate_freight(input: FreightEstimateInput):
                 detail=f"Invalid unit of measure for {input.commodity}. Expected: {expected_uom}"
             )
 
-        ltl_curve, ltl_rate, freight_class, ftl_cost, rate_breaks = build_ltl_curve(
+        ltl_curve, ltl_rate, freight_class, ftl_cost, rate_breaks, min_charge = build_ltl_curve(
             input.site, input.commodity, input.uom, input.quantity, step=1)
 
         if not ltl_curve or len(ltl_curve) < 2:
@@ -237,13 +273,17 @@ def estimate_freight(input: FreightEstimateInput):
             truck_intersection = (
                 truck_cap, interpolate_cost(ltl_curve, truck_cap))
 
+        min_charge_intersection = None
+        if min_charge:
+            min_charge_intersection = find_intersection(ltl_curve, min_charge)
+
         plot_b64 = generate_plot({"LTL": ltl_curve, "FTL": ftl_line},
                                  input.quantity, ltl_cost, ftl_cost,
                                  ltl_cost if optimal_mode == "LTL" else ftl_cost,
                                  max_x, rate_breaks, input.commodity,
                                  intersection=intersection,
                                  vendor_intersection=vendor_intersection,
-                                 truck_intersection=truck_intersection)
+                                 truck_intersection=truck_intersection, min_charge=min_charge, min_charge_intersection=min_charge_intersection)
 
         return FreightEstimateOutput(
             ltl_cost=ltl_cost,
