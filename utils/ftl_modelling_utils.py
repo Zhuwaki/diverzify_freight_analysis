@@ -33,7 +33,7 @@ def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
             return np.nan
 
     required_cols = [
-        'invoice_commodity_quantity', 'new_commodity_group', 'applied_rate', 'unit',
+        'invoice_commodity_quantity', 'new_commodity_group', 'applied_rate', 'unit', 'rate_unit',
         'raw_invoice_cost', 'invoice_freight_commodity_cost', 'minimum_applied', 'site'
     ]
     for col in required_cols:
@@ -47,7 +47,7 @@ def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     df['ftl_cost'] = df.apply(
-        lambda row: get_ftl_rate(row['site'], row['unit'], row['new_commodity_group']), axis=1
+        lambda row: get_ftl_rate(row['site'], row['rate_unit'], row['new_commodity_group']), axis=1
     )
 
     df['ftl_cost'] = df['ftl_cost']/INFLATION
