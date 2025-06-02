@@ -3,11 +3,14 @@ import numpy as np
 import logging
 
 
-def flag_outliers(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
-    for col in columns:
-        if col not in df.columns:
-            raise ValueError(f"Column '{col}' is missing from the DataFrame.")
-
+def flag_outliers(df: pd.DataFrame, cols: list) -> pd.DataFrame:
+    """
+    Flags outliers in specified numeric columns using IQR method.
+    Adds a column per input with suffix '_outlier' containing:
+    - 'LOW', 'HIGH', or 'OK'
+    """
+    df = df.copy()
+    for col in cols:
         q1 = df[col].quantile(0.25)
         q3 = df[col].quantile(0.75)
         iqr = q3 - q1
@@ -15,9 +18,13 @@ def flag_outliers(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
         upper_bound = q3 + 1.5 * iqr
 
         outlier_col_name = f"{col}_outlier"
+
         df[outlier_col_name] = df[col].apply(
-            lambda x: "LOW" if x < lower_bound else (
-                "HIGH" if x > upper_bound else "NORMAL")
+            lambda x: (
+                "LOW" if pd.notna(x) and x < lower_bound else
+                "HIGH" if pd.notna(x) and x > upper_bound else
+                "OK" if pd.notna(x) else "MISSING"
+            )
         )
 
     return df
@@ -26,14 +33,7 @@ def flag_outliers(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
 def compute_line_level_rate_ratio(df: pd.DataFrame) -> pd.DataFrame:
     """
     Computes the line-level rate ratio by normalizing both modelled and actual costs
-    by quantity to compare per-unit rates.
-
-    Adds:
-    - xgs_rate: per-unit cost based on modelled (realistic_optimal_cost)
-    - historical_rate: per-unit cost based on actual (freight_per_invoice)
-    - rate_ratio_normal: xgs_rate / historical_rate
-    - pct_difference: % difference from actual to modelled
-    - savings_flag: 'SAVINGS' if modelled < actual, else 'LOSS'
+    by quantity to compare per-unit rates. Avoids division by zero.
     """
     df = df.copy()
 
@@ -46,19 +46,30 @@ def compute_line_level_rate_ratio(df: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
 
-    # Avoid divide-by-zero
-    df["invoice_commodity_quantity"] = df["invoice_commodity_quantity"].replace(
-        0, pd.NA)
+    # Avoid divide-by-zero: set invoice_commodity_quantity = NaN where it's zero or null
+    df["invoice_commodity_quantity"] = pd.to_numeric(
+        df["invoice_commodity_quantity"], errors="coerce")
+    df.loc[df["invoice_commodity_quantity"] ==
+           0, "invoice_commodity_quantity"] = pd.NA
 
-    df["xgs_rate"] = df["realistic_optimal_cost"] / \
-        df["invoice_commodity_quantity"]
-    df["historical_rate"] = df["freight_per_invoice"] / \
-        df["invoice_commodity_quantity"]
+    # Compute per-unit rates
+    df["xgs_rate"] = pd.to_numeric(
+        df["realistic_optimal_cost"], errors="coerce") / df["invoice_commodity_quantity"]
+    df["historical_rate"] = pd.to_numeric(
+        df["freight_per_invoice"], errors="coerce") / df["invoice_commodity_quantity"]
+
+    # Replace 0s in historical_rate with NaN in-place to avoid unsafe division
+    df.loc[df["historical_rate"] == 0, "historical_rate"] = pd.NA
+
+    # Compute safely
     df["rate_ratio_normal"] = df["xgs_rate"] / df["historical_rate"]
     df["pct_difference"] = (
-        (df["historical_rate"] - df["xgs_rate"]) / df["historical_rate"]) * 100
+        df["xgs_rate"] - df["historical_rate"]) / df["historical_rate"] * 100
+
+    # Flag savings
     df["savings_flag"] = df["pct_difference"].apply(
-        lambda x: "SAVINGS" if x > 0 else "LOSS")
+        lambda x: "SAVINGS" if pd.notna(x) and x > 0 else "LOSS"
+    )
 
     return df
 

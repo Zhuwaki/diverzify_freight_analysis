@@ -39,11 +39,11 @@ async def model_full_truck_load(file: UploadFile = File(...)):
 
         # Run the FTL model logic
         df = simulate_freight_cost_models_revised(df)
-        # df = apply_hybrid_freight_model(df)
-        # df = apply_realistic_optimal_model(df)
-        # df = compute_line_level_rate_ratio(df)
-        # df = compute_site_level_freight_ratio(df)
-        # df = flag_outliers(df, ['rate_ratio_normal', 'pct_difference'])
+        df = apply_hybrid_freight_model(df)
+        df = apply_realistic_optimal_model(df)
+        df = compute_line_level_rate_ratio(df)
+        df = compute_site_level_freight_ratio(df)
+        df = flag_outliers(df, ['rate_ratio_normal', 'pct_difference'])
      #   df = append_group_stats_to_df(df, ['xgs_rate', 'historical_rate'])
 
        # df = evaluate_vendor_vs_physical_efficiency(df)

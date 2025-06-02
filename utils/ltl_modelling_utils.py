@@ -90,6 +90,14 @@ def estimate_invoice_freight(df: pd.DataFrame) -> pd.DataFrame:
         'multiple_commodities': 'first',
         'priority_multiple_commodities': 'first',
         'freight_per_invoice': 'first',
+        'invoice_total': 'first',
+        'invoice_commodity_group': 'first',
+        'invoice_commodity_description': 'first',
+        "location": "first",
+        'supplier_name': 'first',
+        "model": 'first',
+        "supplier_mode": "first",
+        "supplier_match_flag": "first"
     }).rename(columns={'standard_quantity': 'invoice_commodity_quantity'})
 
     error_summary_df = df.groupby('invoice_id').agg({
@@ -222,3 +230,29 @@ def filter_valid_priority_lines(df: pd.DataFrame) -> pd.DataFrame:
     ].copy()
 
     return filtered_df
+
+
+def rank_freight_class(df: pd.DataFrame, class_column: str = 'freight_class') -> pd.DataFrame:
+    """
+    Adds a numeric freight_class_rank column for ordered plotting and sorting.
+
+    Freight class is assumed to follow the format: 'L5C', '5C', '1M', ..., '40M'.
+    """
+    logging.info("🧭 Ranking freight classes...")
+
+    freight_class_order = [
+        'L5C', '5C', '1M', '2M', '3M', '5M',
+        '10M', '20M', '30M', '40M'
+    ]
+    class_rank_map = {cls: rank for rank,
+                      cls in enumerate(freight_class_order, start=1)}
+
+    df['freight_class_rank'] = df[class_column].map(class_rank_map)
+
+    missing_classes = df[df['freight_class_rank'].isna()
+                         ][class_column].unique()
+    if len(missing_classes) > 0:
+        logging.warning(
+            f"⚠️ Unranked freight classes found: {missing_classes}")
+
+    return df
