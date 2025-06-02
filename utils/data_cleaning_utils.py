@@ -458,7 +458,7 @@ def priority_product_composition(df: pd.DataFrame) -> pd.DataFrame:
             [np.inf, -np.inf]).any(axis=1)
     ]
 
-    invalids.to_csv('data/downloads/invalid.csv', index=False)
+    invalids.to_csv('data/downloads/cleaning/invalid.csv', index=False)
 
     if not invalids.empty:
         print("⚠️ Found invalid entries after merge!")
@@ -488,7 +488,7 @@ def filter_sample_invoices(mapped_df):
     logging.info("✅ Filtering sample invoices.")
 
     site_list = [
-        "BSC", "CTS", "DCN", "DIN", "DIT", "DPW", "DSL", "FSC", "FSG", "FSU",
+        "BSC", "SPD", "DCN", "DIN", "DIT", "DPW", "DSL", "FSC", "FSG", "FSU",
         "KFC", "PSC", "PSLV", "PSP", "PSS", "PSUC", "PVF", "RDW", "SPA", "SPB",
         "SPC", "SPCP", "SPHU", "SPHV", "SPJ", "SPK", "SPLA", "SPLV", "SPN", "SPP",
         "SPS", "SPSA", "SPT", "SPTG", "SPTM", "SPW", "SPWV"
