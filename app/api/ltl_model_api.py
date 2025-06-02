@@ -9,10 +9,6 @@ from datetime import datetime
 
 from utils.ltl_modelling_utils import (
     estimate_invoice_freight,
-    calibrate_surcharge,
-    compute_market_rates,
-    flag_market_cost_outliers,
-    compute_freight_and_rate_ratios,
     filter_valid_priority_lines
 )
 
@@ -54,9 +50,9 @@ async def model_partial_truck_load(file: UploadFile = File(...)):
         df = filter_valid_priority_lines(df)
 
         # Save output
-        os.makedirs("data/downloads", exist_ok=True)
+        os.makedirs("data/downloads/ltl", exist_ok=True)
         filename = f"ltl_model_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        filepath = os.path.join("data/downloads", filename)
+        filepath = os.path.join("data/downloads/ltl", filename)
         df.to_csv(filepath, index=False)
 
         return JSONResponse(content={
