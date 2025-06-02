@@ -23,9 +23,18 @@ rates_df = pd.read_csv(RATE_PATH)
 rates_df.columns = rates_df.columns.str.strip()
 
 RATE_TIERS = [
-    (5, "L5C"), (100, "5C"), (1000, "1M"), (2000, "2M"), (3000, "3M"),
-    (5000, "5M"), (10000, "10M"), (20000, "20M"), (30000, "30M"), (40000, "40M")
+    (499, "L5C"),     # <500 lbs
+    (999, "5C"),      # 500–999 lbs
+    (1999, "1M"),     # 1,000–1,999 lbs
+    (2999, "2M"),     # 2,000–2,999 lbs
+    (4999, "3M"),     # 3,000–4,999 lbs
+    (9999, "5M"),     # 5,000–9,999 lbs
+    (19999, "10M"),   # 10,000–19,999 lbs
+    (29999, "20M"),
+    (39999, "30M"),
+    (49999, "40M"),
 ]
+
 
 MAX_X_AXIS = {
     "1VNL": 40000,
@@ -162,6 +171,13 @@ def generate_plot(
     # Plot rate break lines
     for x in rate_breaks:
         ax.axvline(x=x, linestyle=":", color="gray", alpha=0.4)
+        label = next((cls for bound, cls in RATE_TIERS if bound == x), None)
+        if label:
+            ax.annotate(label, xy=(x, ax.get_ylim()[1] * 0.95), xytext=(0, 30),
+                        textcoords='offset points', ha='left', va='center',
+                        fontsize=8, color='gray',
+                        rotation=90,
+                        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.5))
 
     # Threshold lines
     vendor_threshold = FTL_VENDOR_THRESHOLD.get(commodity)

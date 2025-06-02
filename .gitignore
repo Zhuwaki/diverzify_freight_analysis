@@ -15,3 +15,4 @@ app/freight_api.log
 
 /notebooks/nigel/freight_output
 /utils/__pycache__
+/app/api/__pycache__
