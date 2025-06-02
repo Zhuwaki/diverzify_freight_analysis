@@ -13,3 +13,14 @@ app/freight_api.log
 /downloads
 /utils/__pycache__
 
+/__pycache__
+/__pycache__
+*.pyc
+*.pyc
+/app/api/__pycache__
+/__pycache__
+/__pycache__
+/app/api/__pycache__
+*.pyc
+/__pycache__
+/utils/__pycache__
