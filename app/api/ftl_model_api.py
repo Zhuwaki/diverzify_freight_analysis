@@ -39,11 +39,11 @@ async def model_full_truck_load(file: UploadFile = File(...)):
 
         # Run the FTL model logic
         df = simulate_freight_cost_models_revised(df)
-        df = apply_hybrid_freight_model(df)
-        df = apply_realistic_optimal_model(df)
-        df = compute_line_level_rate_ratio(df)
-        df = compute_site_level_freight_ratio(df)
-        df = flag_outliers(df, ['rate_ratio_normal', 'pct_difference'])
+        # df = apply_hybrid_freight_model(df)
+        # df = apply_realistic_optimal_model(df)
+        # df = compute_line_level_rate_ratio(df)
+        # df = compute_site_level_freight_ratio(df)
+        # df = flag_outliers(df, ['rate_ratio_normal', 'pct_difference'])
      #   df = append_group_stats_to_df(df, ['xgs_rate', 'historical_rate'])
 
        # df = evaluate_vendor_vs_physical_efficiency(df)
@@ -52,11 +52,11 @@ async def model_full_truck_load(file: UploadFile = File(...)):
         os.makedirs("data/downloads/ftl", exist_ok=True)
         filename = f"ftl_model_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         filepath = os.path.join("data/downloads/ftl", filename)
-        value_cols = ['xgs_rate', 'historical_rate']
-        output_file = 'site_commodity_rate_summary.csv'
+        # value_cols = ['xgs_rate', 'historical_rate']
+        # output_file = 'site_commodity_rate_summary.csv'
 
-        summary_table = export_site_commodity_range_summary(
-            df, value_cols, output_file)
+        # summary_table = export_site_commodity_range_summary(
+        #     df, value_cols, output_file)
 
         df.to_csv(filepath, index=False)
 
