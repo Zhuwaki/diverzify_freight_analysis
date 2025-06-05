@@ -19,3 +19,4 @@ app/freight_api.log
 /app/api/__pycache__
 /utils/__pycache__
 utils/__pycache__/data_cleaning_utils.cpython-312.pyc
+utils/__pycache__/data_cleaning_utils.cpython-312.pyc
