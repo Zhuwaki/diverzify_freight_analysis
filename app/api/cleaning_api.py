@@ -13,6 +13,8 @@ from utils.data_cleaning_utils import (
     classify_priority_commodities,
     filter_valid_invoices,
     filter_sample_invoices,
+    classify_priority_invoice_with_labels,
+    map_supplier_characteristics
 
 
 )
@@ -57,7 +59,9 @@ async def prepare_raw_input_file(file: UploadFile = File(...)):
         df = priority_product_composition(df)
         df = add_invoice_total(df)
         # df = filter_valid_invoices(df)
-        df = filter_sample_invoices(df)
+        df = classify_priority_invoice_with_labels(df)
+        df = map_supplier_characteristics(df)
+        # df = filter_sample_invoices(df)
 
         # First: Replace infinities
         df = df.replace([np.inf, -np.inf], np.nan)

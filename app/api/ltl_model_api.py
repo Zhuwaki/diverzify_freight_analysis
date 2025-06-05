@@ -9,7 +9,8 @@ from datetime import datetime
 
 from utils.ltl_modelling_utils import (
     estimate_invoice_freight,
-    filter_valid_priority_lines
+    filter_valid_priority_lines,
+    rank_freight_class
 )
 
 router = APIRouter()
@@ -48,6 +49,7 @@ async def model_partial_truck_load(file: UploadFile = File(...)):
         # df = compute_freight_and_rate_ratios(df)
        # df = flag_market_cost_outliers(df)
         df = filter_valid_priority_lines(df)
+        df = rank_freight_class(df, class_column='freight_class')
 
         # Save output
         os.makedirs("data/downloads/ltl", exist_ok=True)

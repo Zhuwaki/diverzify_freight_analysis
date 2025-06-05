@@ -52,11 +52,11 @@ async def model_full_truck_load(file: UploadFile = File(...)):
         os.makedirs("data/downloads/ftl", exist_ok=True)
         filename = f"ftl_model_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         filepath = os.path.join("data/downloads/ftl", filename)
-        value_cols = ['xgs_rate', 'historical_rate']
-        output_file = 'site_commodity_rate_summary.csv'
+        # value_cols = ['xgs_rate', 'historical_rate']
+        # output_file = 'site_commodity_rate_summary.csv'
 
-        summary_table = export_site_commodity_range_summary(
-            df, value_cols, output_file)
+        # summary_table = export_site_commodity_range_summary(
+        #     df, value_cols, output_file)
 
         df.to_csv(filepath, index=False)
 

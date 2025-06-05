@@ -488,10 +488,11 @@ def filter_sample_invoices(mapped_df):
     logging.info("✅ Filtering sample invoices.")
 
     site_list = [
-        "BSC", "SPD", "DCN", "DIN", "DIT", "DPW", "DSL", "FSC", "FSG", "FSU",
-        "KFC", "PSC", "PSLV", "PSP", "PSS", "PSUC", "PVF", "RDW", "SPA", "SPB",
-        "SPC", "SPCP", "SPHU", "SPHV", "SPJ", "SPK", "SPLA", "SPLV", "SPN", "SPP",
-        "SPS", "SPSA", "SPT", "SPTG", "SPTM", "SPW", "SPWV"
+        "BSC", "CCS", "CCSG", "DCN", "DIN", "DIT", "DPW", "DSL", "FSC", "FSG",
+        "FSNC", "FSU", "KFC", "PSC", "PSLV", "PSP", "PSS", "PSUC", "PVF", "RDW",
+        "SPA", "SPB", "SPC", "SPCB", "SPCP", "SPD", "SPHU", "SPHV", "SPJ", "SPK",
+        "SPL", "SPLA", "SPLV", "SPN", "SPP", "SPS", "SPSA", "SPT", "SPTG", "SPTM",
+        "SPW", "SPWV"
     ]
 
     # Apply the filters
@@ -506,3 +507,95 @@ def filter_sample_invoices(mapped_df):
    # filtered_df = filtered_df[filtered_df['conversion_code'] != 'nan_nan_nan']
 
     return filtered_df
+
+
+def classify_priority_invoice_with_labels(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds two invoice-level columns based only on priority product presence:
+    - invoice_commodity_group: the group (e.g., 1CBL) of a priority product, if any
+    - invoice_commodity_description: the description (e.g., Carpet Roll) of that priority product
+    If no priority product exists for an invoice, both fields are set to 'NO_PRIORITY_PRODUCT'.
+    """
+    logging.info("🔧 Running classify_priority_invoice_with_labels...")
+
+    PRIORITY_GROUPS = ['1CBL', '1CPT', '1VNL']
+
+    # Filter only lines that are priority products
+    priority_df = df[df['new_commodity_group'].isin(PRIORITY_GROUPS)]
+
+    # For each invoice, get the first priority product's group and description
+    priority_info = priority_df.groupby('invoice_id').agg(
+        invoice_commodity_group=('new_commodity_group', 'first'),
+        invoice_commodity_description=('new_commodity_description', 'first')
+    ).reset_index()
+
+    # Merge back into full dataset
+    df = df.merge(priority_info, on='invoice_id', how='left')
+
+    # Fill invoices without priority products
+    df['invoice_commodity_group'] = df['invoice_commodity_group'].fillna(
+        'NO_PRIORITY_PRODUCT')
+    df['invoice_commodity_description'] = df['invoice_commodity_description'].fillna(
+        'NO_PRIORITY_PRODUCT')
+
+    logging.info("✅ classify_priority_invoice_with_labels complete.")
+    return df
+
+
+def map_supplier_characteristics(input_df: pd.DataFrame, supplier_df: pd.DataFrame = None, base_path: str = "data/input") -> pd.DataFrame:
+    """
+    Merges supplier metadata on 'supplier_name' and flags if supplier not matched.
+
+    Parameters:
+    - input_df: line-level or invoice-level data containing 'supplier_name'
+    - supplier_df: optional pre-loaded DataFrame of supplier metadata
+    - base_path: directory path to load supplier metadata from if not provided
+
+    Expected columns in supplier_df:
+    - supplier_name, freight_spend, commodity_spend, unique_invoice_id,
+      unique_site, supplier_mode_master, location, model, supplier_mode
+    """
+    logging.info("🔧 Running map_supplier_characteristics...")
+
+    # Load supplier metadata if not provided
+    try:
+        if supplier_df is None:
+            supplier_path = os.path.join(base_path, "Supplier Summary.xlsx")
+            supplier_df = pd.read_excel(
+                supplier_path, sheet_name="Sheet1", engine="openpyxl")
+            logging.info(f"📥 Loaded supplier metadata from {supplier_path}")
+    except Exception as e:
+        raise Exception(f"💥 Failed to load supplier_df: {str(e)}")
+
+    # Standardize for matching
+    input_df['supplier_name'] = input_df['supplier_name'].str.strip().str.upper()
+    supplier_df['supplier_name'] = supplier_df['supplier_name'].str.strip(
+    ).str.upper()
+
+    # Merge
+    merged_df = input_df.merge(
+        supplier_df,
+        on='supplier_name',
+        how='left',
+        suffixes=('', '_supplier')
+    )
+
+    # Match flag
+    merged_df['supplier_match_flag'] = np.where(
+        # or use another key column from supplier_df
+        merged_df['supplier_mode'].notna(),
+        'Supplier Matched',
+        'No Supplier Match'
+    )
+
+    # Export unmatched
+    unmatched = merged_df[merged_df['supplier_match_flag']
+                          == 'No Supplier Match']
+    if not unmatched.empty:
+        os.makedirs("data/downloads/cleaning", exist_ok=True)
+        unmatched.to_csv(
+            "data/downloads/cleaning/unmatched_suppliers_by_name.csv", index=False)
+        logging.warning(f"⚠️ {len(unmatched)} unmatched supplier(s) by name.")
+
+    logging.info("✅ map_supplier_characteristics complete.")
+    return merged_df

@@ -2,7 +2,8 @@
 
 import pandas as pd
 import numpy as np
-
+from utils.model_params_utils import load_rate_table_from_csv, RATES_CSV_PATH
+rate_table = load_rate_table_from_csv(RATES_CSV_PATH)
 INFLATION = 1.06  # Inflation factor for cost adjustments
 XGS_FTL_REBATE = 0.2  # Rebate factor for FTL costs
 STARNET_REBATE = 0.025  # Rebate factor for Starnet costs
@@ -25,15 +26,14 @@ def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
         '1CBL': 2200, '1CPT': 2200, '1VNL': 20000
     }
 
-    site_ftl_costs = {
-        'DIT': 1748.73, 'SPW': 2313.67, 'SPN': 724.83,
-        'SPCP': 2160, 'SPT': 2313.67, 'PVF': 3474.81,
-        'SPHU': 2160, 'SPTM': 3926.47, 'FSU': 1362.91,
-        'CTS': 4405.89, 'SPJ': 2313.67
-    }
+    def get_ftl_rate(site, unit, commodity_group):
+        try:
+            return rate_table[site.upper()][unit.upper()][commodity_group.upper()]['__meta__']['ftl_flat_rate']
+        except KeyError:
+            return np.nan
 
     required_cols = [
-        'invoice_commodity_quantity', 'new_commodity_group', 'applied_rate', 'unit',
+        'invoice_commodity_quantity', 'new_commodity_group', 'applied_rate', 'unit', 'rate_unit',
         'raw_invoice_cost', 'invoice_freight_commodity_cost', 'minimum_applied', 'site'
     ]
     for col in required_cols:
@@ -46,9 +46,12 @@ def simulate_freight_cost_models_revised(df: pd.DataFrame) -> pd.DataFrame:
         df['raw_invoice_cost']
     )
 
-    df['ftl_cost'] = df['site'].map(site_ftl_costs)
+    df['ftl_cost'] = df.apply(
+        lambda row: get_ftl_rate(row['site'], row['rate_unit'], row['new_commodity_group']), axis=1
+    )
+
     df['ftl_cost'] = df['ftl_cost']/INFLATION
-    df['ftl_cost'] = df['ftl_cost']*(1-XGS_FTL_REBATE)
+    # df['ftl_cost'] = df['ftl_cost']*(1-XGS_FTL_REBATE)
     df['ftl_cost'] = df['ftl_cost']*(1-STARNET_REBATE)
 
     def fallback_logic(row):
