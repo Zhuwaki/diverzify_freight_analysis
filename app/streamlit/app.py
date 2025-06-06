@@ -9,8 +9,11 @@ left_col, right_col = st.columns([2, 3])
 
 # Top-level column pair for site + commodity
 col1, col2 = st.columns(2)
-site = col1.selectbox("Select Site", ["DIT", "SPW", "SPN", "SPCP", "SPT",
-                                      "PVF", "SPHU", "SPTM", "FSU", "CTS", "SPJ"])
+site = col1.selectbox("Select Site", ["BSC", "CCS", "CCSG", "DCN", "DIN", "DIT", "DPW", "DSL", "FSC", "FSG",
+                                      "FSNC", "FSU", "KFC", "PSC", "PSLV", "PSP", "PSS", "PSUC", "PVF", "RDW",
+                                      "SPA", "SPB", "SPC", "SPCB", "SPCP", "SPD", "SPHU", "SPHV", "SPJ", "SPK",
+                                      "SPL", "SPLA", "SPLV", "SPN", "SPP", "SPS", "SPSA", "SPT", "SPTG", "SPTM",
+                                      "SPW", "SPWV"])
 commodity = col2.selectbox("Select Commodity", ["1CBL", "1VNL", "1CPT"])
 
 # Top-level column pair for quantity + unit of measure
