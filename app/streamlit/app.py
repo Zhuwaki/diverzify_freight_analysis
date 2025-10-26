@@ -54,4 +54,4 @@ if "result" in st.session_state:
 
     with right_col:
         img_data = base64.b64decode(result["plot_base64"])
-        st.image(img_data, caption="Cost Curve Plot", use_column_width=True)
+        st.image(img_data, caption="Cost Curve Plot", use_container_width=True)
