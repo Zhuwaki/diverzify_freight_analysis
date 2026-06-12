@@ -1,0 +1,53 @@
+﻿Com 1,Commodity 1,Com 2,Commodity 2
+1ADH,Adhesive,2ADH,Adhesive
+1ACC,Accessories,2VNRB,Vinyl/Rubber
+1ACC,Accessories,2WOOD,Wood
+1ACC,Accessories,2WELD,Weld Rod
+1BASE,Base,2BASE,Base
+1BASE,Base,2RUBR,Rubber
+1BASE,Base,2VNL,Vinyl
+1BASE,Base,2MIX,Mix
+1BASE,Base,2CRPT,Carpet
+1CBL,Carpet BL,2CBL,Carpet BL
+1CPT,Carpet Tile,2CPT,Carpet Tile
+1CNS,Ceramic/Natural Stone,2CNS,Ceramic/Natural Stone
+1CNS,Ceramic/Natural Stone,2FDTL,Field tile
+1CNS,Ceramic/Natural Stone,2TRMP,Trim Piece
+1ESD,ESD,2ESD,ESD
+1EPX,Epoxy,2EPX,Epoxy
+1EQPT,Equipment,2EQPT,Equipment
+1FLPR,Floor Prep,2FLPR,Floor Prep
+1INS,Installation Supplies,2INS,Installation Supplies
+1LAM,Laminate,2ROLL,Roll
+1LAM,Laminate,2TILE,Tile
+1LIN,Linoleum,2ROLL,Roll
+1LIN,Linoleum,2TILE,Tile
+1MATS,Mats,2MATS,Mats
+1MISC,Miscellaneous,2MISC,Miscellaneous
+1PAD,Padding,2PAD,Padding
+1PCAR,Product Care,2PCAR,Product Care
+1RFLO,Raised Floor,2RFLO,Raised Floor
+1RENT,Rental Equipment,2RENT,Rental Equipment
+1RBF,Rubber Flooring ,2ROLL,Roll
+1RBF,Rubber Flooring ,2TILE,Tile
+1RUG,Rugs,2RUG,Rugs
+1SLTY,Specialty Flooring,2SLTY,Specialty Flooring
+1STR,Stairs,2STR,Stairs
+1STR,Stairs,2TRAD,Tread
+1STR,Stairs,2STRG,Stringer
+1STR,Stairs,2OPTR,One Piece Tread/Riser
+1STR,Stairs,2RISR,Riser
+1STR,Stairs,2NOSG,Nosing
+1SUN,Sundry,2SUN,Sundry
+1SUN,Sundry,2CAUK,Caulk
+1SUN,Sundry,2GRTT,Grout
+1TRZO,Terrazzo,2TRZO,Terrazzo
+1TOOL,Tools,2TOOL,Tools
+1TRAN,Transitions,2ALL,All
+1TURF,Turf,2TURF,Turf
+1UND,Underlayment,2UND,Underlayment
+1VNL,Vinyl,2ROLL,Roll
+1VNL,Vinyl,2VCT,VCT
+1VNL,Vinyl,2LVT,LVT
+1VNL,Vinyl,2LVP,LVP
+1WOOD,Wood,2WOOD,Wood
